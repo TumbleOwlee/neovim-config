@@ -179,17 +179,6 @@ local on_attach = function(_, bufnr)
   vim.cmd [[ command! Format execute 'lua vim.lsp.buf.formatting()' ]]
 end
 
--- Hover display of definition
-vim.api.nvim_exec(
-  [[
-  augroup Hover 
-    autocmd!
-    autocmd CursorHold * silent lua vim.lsp.buf.hover()
-  augroup end
-]],
-  false
-)
-
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 
