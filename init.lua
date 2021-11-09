@@ -15,6 +15,22 @@ augroup end
 false
 )
 
+--Helper to check if modules is available
+function is_module_available(name)
+  if package.loaded[name] then
+    return true
+  else
+    for _, searcher in ipairs(package.searchers or package.loaders) do
+      local loader = searcher(name)
+      if type(loader) == 'function' then
+        package.preload[name] = loader
+        return true
+      end
+    end
+    return false
+  end
+end
+
 local use = require('packer').use
 require('packer').startup(function()
   use 'wbthomason/packer.nvim' -- Package manager
@@ -106,7 +122,7 @@ vim.g.indent_blankline_char_highlight = 'LineNr'
 vim.g.indent_blankline_show_trailing_blankline_indent = false
 
 -- Gitsigns
-if (package.preload['gitsigns']) then
+if (is_module_available('gitsigns')) then
   require('gitsigns').setup {
     signs = {
       add = { hl = 'GitGutterAdd', text = '+' },
@@ -119,7 +135,7 @@ if (package.preload['gitsigns']) then
 end
 
 -- Telescope
-if (package.preload['telescope']) then
+if (is_module_available('telescope')) then
   require('telescope').setup {
     defaults = {
       mappings = {
@@ -157,7 +173,7 @@ false
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
 
 -- LSP settings
-if (package.preload['lspconfig']) then
+if (is_module_available('lspconfig')) then
   local nvim_lsp = require 'lspconfig'
   local on_attach = function(_, bufnr)
     vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
@@ -199,7 +215,7 @@ end
 
 -- Treesitter configuration
 -- Parsers must be installed manually via :TSInstall
-if (package.preload['nvim-treesitter.configs']) then
+if (is_module_available('nvim-treesitter.configs')) then
   require('nvim-treesitter.configs').setup {
     highlight = {
       enable = true, -- false will disable the whole extension
@@ -256,7 +272,7 @@ end
 vim.o.completeopt = 'menuone,noselect'
 
 -- Compe setup
-if (package.preload['compe']) then
+if (is_module_available('compe')) then
   require('compe').setup {
     source = {
       path = true,
@@ -288,7 +304,7 @@ end
 -- Use (s-)tab to:
 --- move to prev/next item in completion menuone
 --- jump to prev/next snippet's placeholder
-if (package.preload['luasnip']) then
+if (is_module_available('luasnip')) then
   local luasnip = require 'luasnip'
 
   _G.tab_complete = function()
