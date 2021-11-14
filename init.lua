@@ -76,8 +76,8 @@ vim.o.breakindent = true
 --Set tab width
 vim.o.tabstop = 4
 
---Set shiftwidth
-vim.o.shiftwidth = 2
+--Set shiftwidth 
+vim.o.shiftwidth = 4
 
 --Set expandtab
 vim.o.expandtab = true
