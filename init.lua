@@ -53,6 +53,8 @@ require('packer').startup(function()
   use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
   use 'hrsh7th/nvim-compe' -- Autocompletion plugin
   use 'L3MON4D3/LuaSnip' -- Snippets plugin
+  use 'jbyuki/instant.nvim' -- Collaborative editing
+  use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
 end)
 
 --Incremental live completion
@@ -114,6 +116,28 @@ vim.g.maplocalleader = '\\'
 vim.api.nvim_set_keymap('n', 'k', "v:count == 0 ? 'gk' : 'k'", { noremap = true, expr = true, silent = true })
 vim.api.nvim_set_keymap('n', 'j', "v:count == 0 ? 'gj' : 'j'", { noremap = true, expr = true, silent = true })
 
+--Create new highlight group (necessary for instant.nvim)
+local function new_hi_group(name, fg, bg)
+    local bg = bg or '0'
+    local fg = fg or '0'
+    vim.cmd("highlight " .. name .. " guifg=" .. fg .. " guibg="..bg)
+    return name
+end
+
+--Collaborative editing username
+vim.g.instant_username = "Owlee"
+vim.g.instant_auth_separator = "| "
+vim.g.instant_cursor_hl_group_user1   = new_hi_group("instant_cursor1", "#000000", "#BB62D3")
+vim.g.instant_name_hl_group_user1     = new_hi_group("instant_name1", "#BB62D3")
+vim.g.instant_cursor_hl_group_user2   = new_hi_group("instant_cursor2", "#000000", "#D36284")
+vim.g.instant_name_hl_group_user2     = new_hi_group("instant_name2", "#D36284")
+vim.g.instant_cursor_hl_group_user3   = new_hi_group("instant_cursor3", "#000000", "#62A9D3")
+vim.g.instant_name_hl_group_user3     = new_hi_group("instant_name3", "#62A9D3")
+vim.g.instant_cursor_hl_group_user4   = new_hi_group("instant_cursor4", "#000000", "#62D39D")
+vim.g.instant_name_hl_group_user4     = new_hi_group("instant_name4", "#62D39D")
+vim.g.instant_cursor_hl_group_default = new_hi_group("instant_cursor_default", "#000000", "#CCD362")
+vim.g.instant_name_hl_group_default   = new_hi_group("instant_name_default", "#CCD362")
+
 --Map blankline
 vim.g.indent_blankline_char = '┊'
 vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }
@@ -168,6 +192,10 @@ augroup end
 ]],
 false
 )
+
+--Set custom highlight for nvim-cursorword
+vim.api.nvim_exec( [[ hi! CursorWord gui=undercurl cterm=undercurl ]], false)
+
 
 -- Y yank until the end of line
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
