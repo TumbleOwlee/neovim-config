@@ -47,7 +47,7 @@ require('packer').startup(function()
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
-    use 'glepnir/lspsaga.nvim' -- lsp extension
+    use 'tami5/lspsaga.nvim' -- lsp extension
     use 'hrsh7th/nvim-compe' -- Autocompletion plugin
     use 'L3MON4D3/LuaSnip' -- Snippets plugin
     use 'jbyuki/instant.nvim' -- Collaborative editing
@@ -436,7 +436,7 @@ if (is_module_available('which-key')) then
             ['c'] = { [[<cmd>lua require('telescope.builtin').tags{ only_current_buffer = true }<CR>]], 'Tags in current buffer' },
             ['?'] = { [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], 'Old files' },
         },
-        ['<space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
+        ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
     }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
     -- Visual mode with <leader> 
@@ -451,8 +451,8 @@ if (is_module_available('which-key')) then
     wk.register({
         ['<Tab>'] = { 'v:lua.tab_complete()', 'Tab complete next' },
         ['<S-Tab>'] = { 'v:lua.s_tab_complete()', 'Tab complete previous' },
-        ['<cr>'] = { 'compe#confirm("<cr>")', 'Confirm completion' },
-        ['<c-space>'] = { 'compe#complete()', 'Complete' },
+        ['<CR>'] = { 'compe#confirm("<cr>")', 'Confirm completion' },
+        ['<C-Space>'] = { 'compe#complete()', 'Complete' },
     }, { mode = 'i', prefix = '', noremap = true, silent = true, expr = true })
 
     -- Selection mode without <leader>
