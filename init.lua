@@ -54,6 +54,7 @@ require('packer').startup(function()
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
     use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
     use 'akinsho/bufferline.nvim' -- buffer line
+    use 'folke/which-key.nvim' -- show keybindings as list
 end)
 
 --Incremental live completion
@@ -106,58 +107,19 @@ vim.g.lightline = {
     component_function = { gitbranch = 'fugitive#head' },
 }
 
---Remap space as leader key
-vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
-
---Remap for dealing with word wrap
-vim.api.nvim_set_keymap('n', 'k', "v:count == 0 ? 'gk' : 'k'", { noremap = true, expr = true, silent = true })
-vim.api.nvim_set_keymap('n', 'j', "v:count == 0 ? 'gj' : 'j'", { noremap = true, expr = true, silent = true })
-
 --Dashboard default fuzzy search plugin
 vim.g.dashboard_default_executive = 'telescope'
-vim.api.nvim_set_keymap('n', '<leader>ss', [[<cmd>SessionSave<CR>]], { noremap = false, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sl', [[<cmd>SessionLoad<CR>]], { noremap = false, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>fh', [[<cmd>DashboardFindHistory<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>ff', [[<cmd>DashboardFindFile<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>tc', [[<cmd>DashboardChangeColorscheme<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>fa', [[<cmd>DashboardFindWord<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>fb', [[<cmd>DashboardJumpMark<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>cn', [[<cmd>DashboardNewFile<CR>]], { noremap = true, silent = true })
 
 --LspSaga
 if (is_module_available('lspsaga')) then
-    vim.api.nvim_set_keymap('n', 'gh', [[<cmd>lua require'lspsaga.provider'.lsp_finder()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.code_action()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('v', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.range_code_action()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'K', [[<cmd>lua require'lspsaga.hover'.render_hover_doc()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'lss', [[<cmd>lua require'lspsaga.signaturehelp'.signature_help()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'lsr', [[<cmd>lua require'lspsaga.rename'.rename()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'lsp', [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'lsdl', [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', 'lsd', [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', '[e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', ']e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], { noremap = true, silent = true })
-    -- floating terminal
-    vim.api.nvim_set_keymap('n', '<A-d>', [[<cmd>lua require'lspsaga.floaterm'.open_float_terminal()<CR>]], { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('t', '<A-d>', [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], { noremap = true, silent = true })
     require'lspsaga'.init_lsp_saga()
 end
-
---nvim-tree
-vim.api.nvim_set_keymap('n', '<C-n>', [[<cmd>NvimTreeToggle<CR>]], { noremap = true, silent = true })
-
---Gitsigns
-vim.api.nvim_set_keymap('n', '<leader>lb', [[<cmd>Gitsigns toggle_current_line_blame<CR>]], { noremap = true, silent = true })
-
 
 --bufferline.nvim
 if (is_module_available('bufferline')) then
     require'bufferline'.setup{
         diagnostics = 'nvim_lsp'
     }
-    vim.api.nvim_set_keymap('n', '<leader>gb', [[<cmd>BufferLinePick<CR>]], { noremap = true, silent = true })
 end
 
 --Create new highlight group (necessary for instant.nvim)
@@ -172,16 +134,16 @@ end
 if (is_module_available('instant')) then
     vim.g.instant_username = "Owlee"
     vim.g.instant_auth_separator = "| "
-    vim.g.instant_cursor_hl_group_user1     = new_hi_group("instant_cursor1", "#000000", "#BB62D3")
-    vim.g.instant_name_hl_group_user1         = new_hi_group("instant_name1", "#BB62D3")
-    vim.g.instant_cursor_hl_group_user2     = new_hi_group("instant_cursor2", "#000000", "#D36284")
-    vim.g.instant_name_hl_group_user2         = new_hi_group("instant_name2", "#D36284")
-    vim.g.instant_cursor_hl_group_user3     = new_hi_group("instant_cursor3", "#000000", "#62A9D3")
-    vim.g.instant_name_hl_group_user3         = new_hi_group("instant_name3", "#62A9D3")
-    vim.g.instant_cursor_hl_group_user4     = new_hi_group("instant_cursor4", "#000000", "#62D39D")
-    vim.g.instant_name_hl_group_user4         = new_hi_group("instant_name4", "#62D39D")
+    vim.g.instant_cursor_hl_group_user1 = new_hi_group("instant_cursor1", "#000000", "#BB62D3")
+    vim.g.instant_name_hl_group_user1 = new_hi_group("instant_name1", "#BB62D3")
+    vim.g.instant_cursor_hl_group_user2 = new_hi_group("instant_cursor2", "#000000", "#D36284")
+    vim.g.instant_name_hl_group_user2 = new_hi_group("instant_name2", "#D36284")
+    vim.g.instant_cursor_hl_group_user3 = new_hi_group("instant_cursor3", "#000000", "#62A9D3")
+    vim.g.instant_name_hl_group_user3 = new_hi_group("instant_name3", "#62A9D3")
+    vim.g.instant_cursor_hl_group_user4 = new_hi_group("instant_cursor4", "#000000", "#62D39D")
+    vim.g.instant_name_hl_group_user4 = new_hi_group("instant_name4", "#62D39D")
     vim.g.instant_cursor_hl_group_default = new_hi_group("instant_cursor_default", "#000000", "#CCD362")
-    vim.g.instant_name_hl_group_default     = new_hi_group("instant_name_default", "#CCD362")
+    vim.g.instant_name_hl_group_default = new_hi_group("instant_name_default", "#CCD362")
 end
 
 --Map blankline
@@ -224,16 +186,6 @@ if (is_module_available('telescope')) then
         },
     }
 end
---Add leader shortcuts
-vim.api.nvim_set_keymap('n', '<leader><space>', [[<cmd>lua require('telescope.builtin').buffers()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sf', [[<cmd>lua require('telescope.builtin').find_files({previewer = false})<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sb', [[<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sh', [[<cmd>lua require('telescope.builtin').help_tags()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>st', [[<cmd>lua require('telescope.builtin').tags()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sd', [[<cmd>lua require('telescope.builtin').grep_string()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sp', [[<cmd>lua require('telescope.builtin').live_grep()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>so', [[<cmd>lua require('telescope.builtin').tags{ only_current_buffer = true }<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>?', [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], { noremap = true, silent = true })
 
 -- Highlight on yank
 vim.api.nvim_exec(
@@ -257,26 +209,6 @@ if (is_module_available('lspconfig')) then
     local nvim_lsp = require 'lspconfig'
     local on_attach = function(_, bufnr)
         vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-
-        local opts = { noremap = true, silent = true }
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-        -- vim.api.nvim_buf_set_keymap(bufnr, 'v', '<leader>ca', '<cmd>lua vim.lsp.buf.range_code_action()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>so', [[<cmd>lua require('telescope.builtin').lsp_document_symbols()<CR>]], opts)
         vim.cmd [[ command! Format execute 'lua vim.lsp.buf.formatting()' ]]
     end
 
@@ -351,7 +283,7 @@ end
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = 'menuone,noselect'
 
--- Compe setup
+-- Compe initialization
 if (is_module_available('compe')) then
     require('compe').setup {
         source = {
@@ -367,25 +299,22 @@ if (is_module_available('compe')) then
     }
 end
 
--- Utility functions for compe and luasnip
-local t = function(str)
-    return vim.api.nvim_replace_termcodes(str, true, true, true)
-end
-
-local check_back_space = function()
-    local col = vim.fn.col '.' - 1
-    if col == 0 or vim.fn.getline('.'):sub(col, col):match '%s' then
-        return true
-    else
-        return false
-    end
-end
-
--- Use (s-)tab to:
---- move to prev/next item in completion menuone
---- jump to prev/next snippet's placeholder
+-- luasnip initialization
 if (is_module_available('luasnip')) then
     local luasnip = require 'luasnip'
+
+    local t = function(str)
+        return vim.api.nvim_replace_termcodes(str, true, true, true)
+    end
+
+    local check_back_space = function()
+        local col = vim.fn.col '.' - 1
+        if col == 0 or vim.fn.getline('.'):sub(col, col):match '%s' then
+            return true
+        else
+            return false
+        end
+    end
 
     _G.tab_complete = function()
         if vim.fn.pumvisible() == 1 then
@@ -410,15 +339,125 @@ if (is_module_available('luasnip')) then
     end
 end
 
--- Map tab to the above tab complete functiones
-vim.api.nvim_set_keymap('i', '<Tab>', 'v:lua.tab_complete()', { expr = true })
-vim.api.nvim_set_keymap('s', '<Tab>', 'v:lua.tab_complete()', { expr = true })
-vim.api.nvim_set_keymap('i', '<S-Tab>', 'v:lua.s_tab_complete()', { expr = true })
-vim.api.nvim_set_keymap('s', '<S-Tab>', 'v:lua.s_tab_complete()', { expr = true })
+-- KEYBINDINGS
 
--- Map exit of terminal mode
-vim.api.nvim_set_keymap('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true })
+--Remap space as leader key
+vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
 
--- Map compe confirm and complete functions
-vim.api.nvim_set_keymap('i', '<cr>', 'compe#confirm("<cr>")', { expr = true })
-vim.api.nvim_set_keymap('i', '<c-space>', 'compe#complete()', { expr = true })
+--WhichKey keybinding generation
+if (is_module_available('which-key')) then
+    local wk = require('which-key')
+
+    -- Terminal mode without <leader>
+    wk.register({
+        ['<A-d>'] = { [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], 'Close terminal' },
+    }, { mode = 't', prefix = "", noremap =true, silent = true })
+
+    -- Normal mode without <leader> 
+    wk.register({
+        ['g'] = {
+            ['name'] = 'Go to',
+            ['D'] = { [[<Cmd>lua vim.lsp.buf.declaration()<CR>]], 'Go to declaration' },
+            ['d'] = { [[<Cmd>lua vim.lsp.buf.definition()<CR>]], 'Go to definition' },
+            ['i'] = { [[<cmd>lua vim.lsp.buf.implementation()<CR>]], 'Go to implementation' },
+            ['h'] = { [[<cmd>lua require'lspsaga.provider'.lsp_finder()<CR>]], 'LSP finder' },
+            ['r'] = { [[<cmd>lua vim.lsp.buf.references()<CR>]], 'Show references' },
+        },
+        ['K'] = { [[<cmd>lua require'lspsaga.hover'.render_hover_doc()<CR>]], 'Show documentation' },
+        ['<A-d>'] = { [[<cmd>lua require'lspsaga.floaterm'.open_float_terminal()<CR>]], 'Open terminal' },
+        ['<C-n>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
+    }, { mode = 'n', prefix = "", noremap = true, silent = true })
+    -- Expressions
+    wk.register({
+        ['j'] = { 'v:count == 0 ? "gj" : "j"', 'Move cursor up' },
+        ['k'] = { 'v:count == 0 ? "gk" : "k"', 'Move cursor up' },
+    }, { mode = 'n', prefix = "", noremap = true, silent = true, expr = true })
+
+    -- Normal mode with <leader> 
+    wk.register({
+        ['c'] = {
+            ['name'] = 'Code actions',
+            ['a'] = { [[<cmd>lua require'lspsaga.codeaction'.code_action()<CR>]], 'Code action' },
+        },
+        ['s'] = { -- Session
+            ['name'] = 'Session handling',
+            ['s'] = 'Save session',
+            ['l'] = 'Load session',
+        },
+        ['D'] = { [[<cmd>lua vim.lsp.buf.type_definition()<CR>]], 'Type definition' },
+        ['d'] = { -- Dashboard
+            ['name'] = 'Dashboard operations.',
+            ['h'] = { [[<cmd>DashboardFindHistory<CR>]], 'Find history' },
+            ['f'] = { [[<cmd>DashboardFindFile<CR>]], 'Find file' },
+            ['c'] = { [[<cmd>DashboardChangeColorscheme<CR>]], 'Change colorscheme' },
+            ['w'] = { [[<cmd>DashboardFindWord<CR>]], 'Find word' },
+            ['j'] = { [[<cmd>DashboardJumpMark<CR>]], 'Jump mark' },
+            ['n'] = { [[<cmd>DashboardNewFile<CR>]], 'New file' },
+        },
+        ['l'] = {
+            ['name'] = 'LSP operations',
+            ['w'] = {
+                ['name'] = 'Workspace',
+                ['a'] = { [[<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>]], 'Add folder' },
+                ['r'] = { [[<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>]], 'Remove folder' },
+                ['l'] = { [[<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>]], 'List folders' },
+            },
+            ['q'] = { [[<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>]], 'Set loclist' },
+            ['s'] = { [[<cmd>lua require'lspsaga.signaturehelp'.signature_help()<CR>]], 'Signature help' },
+            ['d'] = { [[<cmd>lua require('telescope.builtin').lsp_document_symbols()<CR>]], 'Document symbols' },
+            ['r'] = { [[<cmd>lua require'lspsaga.rename'.rename()<CR>]], 'Rename' },
+            ['p'] = { [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], 'Preview definition' },
+            ['l'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], 'Show line diagnostics' },
+            ['c'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], 'Show cursor diagnostics' },
+            ['j'] = { 
+                ['name'] = 'Jump',
+                ['n'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], 'Jump to next' },
+                ['p'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], 'Jump to previous' },
+            },
+        },
+        ['b'] = {
+            ['name'] = 'Buffer operations',
+            ['p'] = { [[<cmd>BufferLinePick<CR>]], 'Buffer picker' },
+            ['b'] = { [[<cmd>Gitsigns toggle_current_line_blame<CR>]], 'Toggle line blame' },
+        },
+        ['t'] = {
+            ['name'] = 'Telescope operations',
+            ['f'] = {
+                ['name'] = 'Find',
+                ['f'] = { [[<cmd>lua require('telescope.builtin').find_files({previewer = false})<CR>]], 'Find files' },
+                ['z'] ={ [[<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<CR>]], 'Fuzzy find' },
+            },
+            ['h'] = { [[<cmd>lua require('telescope.builtin').help_tags()<CR>]], 'Help tags' },
+            ['t'] = { [[<cmd>lua require('telescope.builtin').tags()<CR>]], 'Tags' },
+            ['s'] = { [[<cmd>lua require('telescope.builtin').grep_string()<CR>]], 'Grep string' },
+            ['l'] = { [[<cmd>lua require('telescope.builtin').live_grep()<CR>]], 'Live grep' },
+            ['c'] = { [[<cmd>lua require('telescope.builtin').tags{ only_current_buffer = true }<CR>]], 'Tags in current buffer' },
+            ['?'] = { [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], 'Old files' },
+        },
+        ['<space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
+    }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
+
+    -- Visual mode with <leader> 
+    wk.register({
+        ['c'] = {
+            ['name'] = 'Range code actions',
+            ['a'] = { [[<cmd>lua require'lspsaga.codeaction'.range_code_action()<CR>]], 'Range code action' },
+        },
+    }, { mode = 'v', prefix = '<leader>', noremap = true, silent = true })
+
+    -- Insert mode without <leader>
+    wk.register({
+        ['<Tab>'] = { 'v:lua.tab_complete()', 'Tab complete next' },
+        ['<S-Tab>'] = { 'v:lua.s_tab_complete()', 'Tab complete previous' },
+        ['<cr>'] = { 'compe#confirm("<cr>")', 'Confirm completion' },
+        ['<c-space>'] = { 'compe#complete()', 'Complete' },
+    }, { mode = 'i', prefix = '', noremap = true, silent = true, expr = true })
+
+    -- Selection mode without <leader>
+    wk.register({
+        ['<Tab>'] = { 'v:lua.tab_complete()', 'Tab complete' },
+        ['<S-Tab>'] = { 'v:lua.s_tab_complete()', 'Tab complete previous' },
+    }, { mode = 's', prefix = '', noremap = true, silent = true, expr = true })
+end
