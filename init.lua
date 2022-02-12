@@ -37,7 +37,6 @@ require('packer').startup(function()
     use 'tpope/vim-fugitive' -- Git commands in nvim
     use 'tpope/vim-rhubarb' -- Fugitive-companion to interact with github
     use 'tpope/vim-commentary' -- "gc" to comment visual regions/lines
-    use 'ludovicchabant/vim-gutentags' -- Automatic tags management
     use 'glepnir/dashboard-nvim' -- Dashboard start page
     use { 'folke/trouble.nvim', requires = 'kyazdani42/nvim-web-devicons', config = function() require('trouble').setup {} end } -- List of diagnostics
     use { 'nvim-telescope/telescope.nvim', requires = { { 'nvim-lua/popup.nvim' }, { 'nvim-lua/plenary.nvim' } } } -- UI to select things (files, grep results, open buffers...)
@@ -54,7 +53,6 @@ require('packer').startup(function()
     use 'jbyuki/instant.nvim' -- Collaborative editing
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
     use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
-    use 'lukas-reineke/indent-blankline.nvim' -- intendation highlighting
     use 'akinsho/bufferline.nvim' -- buffer line
 end)
 
@@ -129,21 +127,23 @@ vim.api.nvim_set_keymap('n', '<leader>fb', [[<cmd>DashboardJumpMark<CR>]], { nor
 vim.api.nvim_set_keymap('n', '<leader>cn', [[<cmd>DashboardNewFile<CR>]], { noremap = true, silent = true })
 
 --LspSaga
-vim.api.nvim_set_keymap('n', 'gh', [[<cmd>lua require'lspsaga.provider'.lsp_finder()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.code_action()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('v', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.range_code_action()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'K', [[<cmd>lua require'lspsaga.hover'.render_hover_doc()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'lss', [[<cmd>lua require'lspsaga.signaturehelp'.signature_help()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'lsr', [[<cmd>lua require'lspsaga.rename'.rename()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'lsp', [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'lsdl', [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'lsd', [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '[e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', ']e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], { noremap = true, silent = true })
--- floating terminal
-vim.api.nvim_set_keymap('n', '<A-d>', [[<cmd>lua require'lspsaga.floaterm'.open_float_terminal()<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('t', '<A-d>', [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], { noremap = true, silent = true })
-require'lspsaga'.init_lsp_saga()
+if (is_module_available('lspsaga')) then
+    vim.api.nvim_set_keymap('n', 'gh', [[<cmd>lua require'lspsaga.provider'.lsp_finder()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.code_action()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('v', '<leader>ca', [[<cmd>lua require'lspsaga.codeaction'.range_code_action()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'K', [[<cmd>lua require'lspsaga.hover'.render_hover_doc()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'lss', [[<cmd>lua require'lspsaga.signaturehelp'.signature_help()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'lsr', [[<cmd>lua require'lspsaga.rename'.rename()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'lsp', [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'lsdl', [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', 'lsd', [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '[e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', ']e', [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], { noremap = true, silent = true })
+    -- floating terminal
+    vim.api.nvim_set_keymap('n', '<A-d>', [[<cmd>lua require'lspsaga.floaterm'.open_float_terminal()<CR>]], { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('t', '<A-d>', [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], { noremap = true, silent = true })
+    require'lspsaga'.init_lsp_saga()
+end
 
 --nvim-tree
 vim.api.nvim_set_keymap('n', '<C-n>', [[<cmd>NvimTreeToggle<CR>]], { noremap = true, silent = true })
@@ -151,18 +151,14 @@ vim.api.nvim_set_keymap('n', '<C-n>', [[<cmd>NvimTreeToggle<CR>]], { noremap = t
 --Gitsigns
 vim.api.nvim_set_keymap('n', '<leader>lb', [[<cmd>Gitsigns toggle_current_line_blame<CR>]], { noremap = true, silent = true })
 
---indent-blankline
-vim.opt.list = true
-vim.opt.listchars:append("eol:↴")
-require("indent_blankline").setup {
-    show_end_of_line = true,
-}
 
 --bufferline.nvim
-require'bufferline'.setup{
-    diagnostics = 'nvim_lsp'
-}
-vim.api.nvim_set_keymap('n', '<leader>gb', [[<cmd>BufferLinePick<CR>]], { noremap = true, silent = true })
+if (is_module_available('bufferline')) then
+    require'bufferline'.setup{
+        diagnostics = 'nvim_lsp'
+    }
+    vim.api.nvim_set_keymap('n', '<leader>gb', [[<cmd>BufferLinePick<CR>]], { noremap = true, silent = true })
+end
 
 --Create new highlight group (necessary for instant.nvim)
 local function new_hi_group(name, fg, bg)
@@ -172,26 +168,35 @@ local function new_hi_group(name, fg, bg)
     return name
 end
 
---Collaborative editing username
-vim.g.instant_username = "Owlee"
-vim.g.instant_auth_separator = "| "
-vim.g.instant_cursor_hl_group_user1     = new_hi_group("instant_cursor1", "#000000", "#BB62D3")
-vim.g.instant_name_hl_group_user1         = new_hi_group("instant_name1", "#BB62D3")
-vim.g.instant_cursor_hl_group_user2     = new_hi_group("instant_cursor2", "#000000", "#D36284")
-vim.g.instant_name_hl_group_user2         = new_hi_group("instant_name2", "#D36284")
-vim.g.instant_cursor_hl_group_user3     = new_hi_group("instant_cursor3", "#000000", "#62A9D3")
-vim.g.instant_name_hl_group_user3         = new_hi_group("instant_name3", "#62A9D3")
-vim.g.instant_cursor_hl_group_user4     = new_hi_group("instant_cursor4", "#000000", "#62D39D")
-vim.g.instant_name_hl_group_user4         = new_hi_group("instant_name4", "#62D39D")
-vim.g.instant_cursor_hl_group_default = new_hi_group("instant_cursor_default", "#000000", "#CCD362")
-vim.g.instant_name_hl_group_default     = new_hi_group("instant_name_default", "#CCD362")
+-- instant.nvim
+if (is_module_available('instant')) then
+    vim.g.instant_username = "Owlee"
+    vim.g.instant_auth_separator = "| "
+    vim.g.instant_cursor_hl_group_user1     = new_hi_group("instant_cursor1", "#000000", "#BB62D3")
+    vim.g.instant_name_hl_group_user1         = new_hi_group("instant_name1", "#BB62D3")
+    vim.g.instant_cursor_hl_group_user2     = new_hi_group("instant_cursor2", "#000000", "#D36284")
+    vim.g.instant_name_hl_group_user2         = new_hi_group("instant_name2", "#D36284")
+    vim.g.instant_cursor_hl_group_user3     = new_hi_group("instant_cursor3", "#000000", "#62A9D3")
+    vim.g.instant_name_hl_group_user3         = new_hi_group("instant_name3", "#62A9D3")
+    vim.g.instant_cursor_hl_group_user4     = new_hi_group("instant_cursor4", "#000000", "#62D39D")
+    vim.g.instant_name_hl_group_user4         = new_hi_group("instant_name4", "#62D39D")
+    vim.g.instant_cursor_hl_group_default = new_hi_group("instant_cursor_default", "#000000", "#CCD362")
+    vim.g.instant_name_hl_group_default     = new_hi_group("instant_name_default", "#CCD362")
+end
 
 --Map blankline
-vim.g.indent_blankline_char = '┊'
-vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }
-vim.g.indent_blankline_buftype_exclude = { 'terminal', 'nofile' }
-vim.g.indent_blankline_char_highlight = 'LineNr'
-vim.g.indent_blankline_show_trailing_blankline_indent = false
+if (is_module_available('indent_blankline')) then
+    vim.opt.list = true
+    vim.opt.listchars:append("eol:↴")
+    vim.g.indent_blankline_char = '┊'
+    vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }
+    vim.g.indent_blankline_buftype_exclude = { 'terminal', 'nofile' }
+    vim.g.indent_blankline_char_highlight = 'LineNr'
+    vim.g.indent_blankline_show_trailing_blankline_indent = true
+    require("indent_blankline").setup {
+        show_end_of_line = true,
+    }
+end
 
 -- Gitsigns
 if (is_module_available('gitsigns')) then
@@ -242,8 +247,7 @@ false
 )
 
 --Set custom highlight for nvim-cursorword
-vim.api.nvim_exec( [[ hi! CursorWord gui=undercurl cterm=undercurl ]], false)
-
+vim.api.nvim_exec( [[ hi! CursorWord gui=underline cterm=undercurl ]], false)
 
 -- Y yank until the end of line
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
