@@ -54,7 +54,6 @@ require('packer').startup(function()
     use 'jbyuki/instant.nvim' -- Collaborative editing
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
     use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
-    use 'lukas-reineke/indent-blankline.nvim' -- intendation highlighting
     use 'akinsho/bufferline.nvim' -- buffer line
 end)
 
@@ -151,12 +150,6 @@ vim.api.nvim_set_keymap('n', '<C-n>', [[<cmd>NvimTreeToggle<CR>]], { noremap = t
 --Gitsigns
 vim.api.nvim_set_keymap('n', '<leader>lb', [[<cmd>Gitsigns toggle_current_line_blame<CR>]], { noremap = true, silent = true })
 
---indent-blankline
-vim.opt.list = true
-vim.opt.listchars:append("eol:↴")
-require("indent_blankline").setup {
-    show_end_of_line = true,
-}
 
 --bufferline.nvim
 require'bufferline'.setup{
@@ -187,11 +180,16 @@ vim.g.instant_cursor_hl_group_default = new_hi_group("instant_cursor_default", "
 vim.g.instant_name_hl_group_default     = new_hi_group("instant_name_default", "#CCD362")
 
 --Map blankline
+vim.opt.list = true
+vim.opt.listchars:append("eol:↴")
 vim.g.indent_blankline_char = '┊'
 vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }
 vim.g.indent_blankline_buftype_exclude = { 'terminal', 'nofile' }
 vim.g.indent_blankline_char_highlight = 'LineNr'
-vim.g.indent_blankline_show_trailing_blankline_indent = false
+vim.g.indent_blankline_show_trailing_blankline_indent = true
+require("indent_blankline").setup {
+    show_end_of_line = true,
+}
 
 -- Gitsigns
 if (is_module_available('gitsigns')) then
