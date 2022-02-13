@@ -119,6 +119,15 @@ vim.g.lightline = {
 
 --Dashboard default fuzzy search plugin
 vim.g.dashboard_default_executive = 'telescope'
+vim.g.dashboard_custom_shortcut = {
+     ['last_session'] = 'SPC s l',
+     ['find_history'] = 'SPC d h',
+     ['find_file'] = 'SPC d f',
+     ['new_file'] = 'SPC d n',
+     ['change_colorscheme'] = 'SPC d c',
+     ['find_word'] = 'SPC d w',
+     ['book_marks'] = 'SPC d b',
+ }
 
 --LspSaga
 if (is_module_available('lspsaga')) then
@@ -467,7 +476,7 @@ if (is_module_available('which-key')) then
             ['f'] = { [[<cmd>DashboardFindFile<CR>]], 'Find file' },
             ['c'] = { [[<cmd>DashboardChangeColorscheme<CR>]], 'Change colorscheme' },
             ['w'] = { [[<cmd>DashboardFindWord<CR>]], 'Find word' },
-            ['j'] = { [[<cmd>DashboardJumpMark<CR>]], 'Jump mark' },
+            ['b'] = { [[<cmd>DashboardJumpMark<CR>]], 'Jump bookmark' },
             ['n'] = { [[<cmd>DashboardNewFile<CR>]], 'New file' },
         },
         ['g'] = {
