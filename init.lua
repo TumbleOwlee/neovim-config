@@ -22,13 +22,18 @@ function is_module_available(name)
     else
         for _, searcher in ipairs(package.searchers or package.loaders) do
             local loader = searcher(name)
-            if type(loader) == 'function' then
+            if loader and type(loader) == 'function' then
                 package.preload[name] = loader
                 return true
             end
         end
         return false
     end
+end
+
+--impatient.nvimj
+if (is_module_available('impatient')) then
+    require('impatient')
 end
 
 local use = require('packer').use
@@ -55,6 +60,11 @@ require('packer').startup(function()
     use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
     use 'akinsho/bufferline.nvim' -- buffer line
     use 'folke/which-key.nvim' -- show keybindings as list
+    use 'folke/twilight.nvim' -- dims inactive potions of code
+    use 'lewis6991/impatient.nvim' -- speed up plugin loading
+    use { 'folke/todo-comments.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Todo listing
+    use 'mfussenegger/nvim-dap' -- Debug adapter protocol
+    use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
 end)
 
 --Incremental live completion
@@ -120,6 +130,11 @@ if (is_module_available('bufferline')) then
     require'bufferline'.setup{
         diagnostics = 'nvim_lsp'
     }
+end
+
+--todo-comments.nvim
+if (is_module_available('todo-comments')) then
+    require'todo-comments'.setup{ }
 end
 
 --Create new highlight group (necessary for instant.nvim)
@@ -339,6 +354,65 @@ if (is_module_available('luasnip')) then
     end
 end
 
+--twilight.nvim
+if (is_module_available('twilight')) then
+    require'twilight'.setup {
+        dimming = {
+            alpha = 0.5,
+        },
+        context = 30,
+    }
+end
+
+--dap-nvim
+if (is_module_available('dap')) then
+    local dap = require('dap')
+    dap.adapters.lldb = {
+      type = 'executable',
+      command = '/usr/bin/lldb-vscode', -- adjust as needed
+      name = "lldb"
+    }
+
+    dap.configurations.cpp = {
+        {
+            name = "Launch",
+            type = "lldb",
+            request = "launch",
+            program = function()
+              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            end,
+            cwd = '${workspaceFolder}',
+            stopOnEntry = false,
+            args = {},
+            runInTerminal = false,
+        },
+    }
+    dap.configurations.c = dap.configurations.cpp
+    dap.configurations.rust = dap.configurations.cpp
+    dap.configurations.lua = { 
+        { 
+            type = 'nlua', 
+            request = 'attach',
+            name = "Attach to running Neovim instance",
+            host = function()
+                local value = vim.fn.input('Host [127.0.0.1]: ')
+                if value ~= "" then
+                    return value
+                end
+                return '127.0.0.1'
+            end,
+            port = function()
+                local val = tonumber(vim.fn.input('Port: '))
+                assert(val, "Please provide a port number")
+                return val
+            end,
+        }
+    }
+    dap.adapters.nlua = function(callback, config)
+        callback({ type = 'server', host = config.host, port = config.port })
+    end
+end
+
 -- KEYBINDINGS
 
 --Remap space as leader key
@@ -396,6 +470,33 @@ if (is_module_available('which-key')) then
             ['j'] = { [[<cmd>DashboardJumpMark<CR>]], 'Jump mark' },
             ['n'] = { [[<cmd>DashboardNewFile<CR>]], 'New file' },
         },
+        ['g'] = {
+            ['name'] = 'Debugging operations',
+            ['b'] = { [[<cmd>lua require'dap'.toggle_breakpoint()<CR>]], 'Toggle breakpoint' },
+            ['c'] = { [[<cmd>lua require'dap'.continue()<CR>]], 'Continue' },
+            ['r'] = { [[<cmd>lua require'dap'.continue()<CR>]], 'Run' },
+            ['t'] = { [[<cmd>lua require'dap'.terminate()<CR>]], 'Terminate' },
+            ['d'] = { [[<cmd>lua require'dap'.clear_breakpoints()<CR>]], 'Clear all breakpoints' },
+            ['n'] = { [[<cmd>lua require'dap'.step_over()<CR>]], 'Step over' },
+            ['g'] = { [[<cmd>lua require'dap'.run_to_cursor()<CR>]], 'Run to cursor' },
+            ['s'] = { 
+                ['name'] = 'Step operations',
+                ['i'] = { [[<cmd>lua require'dap'.step_into()<CR>]], 'Step into' },
+                ['o'] = { [[<cmd>lua require'dap'.step_out()<CR>]], 'Step out' },
+                ['b'] = { [[<cmd>lua require'dap'.step_back()<CR>]], 'Step back' },
+                ['r'] = { [[<cmd>lua require'dap'.reverse_continue()<CR>]], 'Reverse continue' },
+            },
+            ['i'] = {
+                ['name'] = 'Information',
+                ['u'] = { [[<cmd>lua require'dap'.up()<CR>]], 'Go up in stacktrace' },
+                ['d'] = { [[<cmd>lua require'dap'.down()<CR>]], 'Go down in stacktrace' },
+                ['f'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames)<CR>]], 'Show frames' },
+                ['s'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames)<CR>]], 'Show scopes' },
+            },
+            ['p'] = { [[<cmd>lua require'dap'.pause()<CR>]], 'Pause thread' },
+            ['r'] = { [[<cmd>lua require'dap'.repl.toggle()<CR>]], 'Toggle interactive REPL console' },
+            ['v'] = { [[<cmd>lua require'dap.ui.widgets').hover()<CR>]], 'Show value of expr under cursor' },
+        },
         ['l'] = {
             ['name'] = 'LSP operations',
             ['w'] = {
@@ -422,6 +523,12 @@ if (is_module_available('which-key')) then
             ['p'] = { [[<cmd>BufferLinePick<CR>]], 'Buffer picker' },
             ['b'] = { [[<cmd>Gitsigns toggle_current_line_blame<CR>]], 'Toggle line blame' },
         },
+        ['q'] = {
+            ['name'] = 'Quickfix window',
+            ['t'] = { [[<cmd>TroubleToggle<CR>]], 'Toggle quickfix' },
+            ['r'] = { [[<cmd>TroubleRefresh<CR>]], 'Refresh quickfix' },
+            ['d'] = { [[<cmd>TodoTelescope<CR>]], 'Show ToDo list' },
+        },
         ['t'] = {
             ['name'] = 'Telescope operations',
             ['f'] = {
@@ -436,6 +543,7 @@ if (is_module_available('which-key')) then
             ['c'] = { [[<cmd>lua require('telescope.builtin').tags{ only_current_buffer = true }<CR>]], 'Tags in current buffer' },
             ['?'] = { [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], 'Old files' },
         },
+        ['z'] = { [[<cmd>Twilight<CR>]], 'Toggle zen mode' },
         ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
     }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
