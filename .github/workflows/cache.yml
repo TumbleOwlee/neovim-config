@@ -27,14 +27,16 @@ jobs:
       - name: Install plugins
         run: |
           nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
+          
+      - name: Archive cache
+        run: | 
+          tar cvfz plugin_cache.tar.gz .local/share/nvim/ .config/nvim
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ github.workflow }}
           path: |
-            ~/.local/share/*
-            ~/.config/*
+            PluginCache.tar.gz
           if-no-files-found: error
           retention-days: 0
-    
