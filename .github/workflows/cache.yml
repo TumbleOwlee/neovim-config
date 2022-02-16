@@ -1,0 +1,40 @@
+name: PluginCache
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Install configuration
+        run: |
+          mkdir -p ~/.config/nvim/ 
+          cp ./init.lua ~/.config/nvim/init.lua || exit 1
+        
+      - name: Setup Neovim
+        uses: MunifTanjim/setup-neovim-action@v1.0.0
+        with:
+          tag: stable
+        
+      - name: Install plugins
+        run: |
+          nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: ${{ github.workflow }}
+          path: |
+            ~/.local/share/*
+            ~/.config/*
+          if-no-files-found: error
+          retention-days: 0
+    
