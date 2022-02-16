@@ -31,7 +31,7 @@ jobs:
       - name: Archive cache
         run: | 
           cd ~
-          tar cvfz /tmp/${{ github.workflow }}.tar.gz ~/.local/share/nvim/ ~/.config/nvim
+          tar cvfz /tmp/${{ github.workflow }}.tar.gz .local/share/nvim/ .config/nvim
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.3.1
