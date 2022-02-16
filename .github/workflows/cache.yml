@@ -31,13 +31,13 @@ jobs:
       - name: Archive cache
         run: | 
           cd ~
-          tar cvfz /tmp/plugin_cache.tar.gz ~/.local/share/nvim/ ~/.config/nvim
+          tar cvfz ${{ github.workflow }}.tar.gz ~/.local/share/nvim/ ~/.config/nvim
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ github.workflow }}
           path: |
-            /tmp/PluginCache.tar.gz
+            ${{ github.workflow }}.tar.gz
           if-no-files-found: error
           retention-days: 0
