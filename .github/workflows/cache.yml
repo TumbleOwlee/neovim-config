@@ -30,7 +30,7 @@ jobs:
           
       - name: Archive cache
         run: | 
-          tar cvfz plugin_cache.tar.gz .local/share/nvim/ .config/nvim
+          tar cvfz plugin_cache.tar.gz ~/.local/share/nvim/ ~/.config/nvim
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2.3.1
