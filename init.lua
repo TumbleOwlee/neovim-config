@@ -315,9 +315,12 @@ if (is_module_available('cmp')) then
             luasnip.jump(-1)
         end
     end
+    -- Important Note
+    -- By default SHIFT-CR may not work. If so, you have to configure your terminal to send the correct codes.
+    -- See https://stackoverflow.com/questions/16359878/how-to-map-shift-enter
     _G.vimrc.cmp.cb_s_cr = function()
-        if cmp.visible() and cmp.get_active_entry()
-            then cmp.confirm()
+        if cmp.visible() and cmp.get_active_entry() then 
+            cmp.confirm()
         end
     end
     _G.vimrc.cmp.cb_c_x = function()
