@@ -53,8 +53,14 @@ require('packer').startup(function()
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
     use 'tami5/lspsaga.nvim' -- lsp extension
-    use 'hrsh7th/nvim-compe' -- Autocompletion plugin
+    use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
+    use 'hrsh7th/cmp-nvim-lsp'
+    use 'hrsh7th/cmp-buffer'
+    use 'hrsh7th/cmp-path'
+    use 'hrsh7th/cmp-cmdline'
     use 'L3MON4D3/LuaSnip' -- Snippets plugin
+    use 'saadparwaiz1/cmp_luasnip'
+    use 'honza/vim-snippets' -- Code snippets
     use 'jbyuki/instant.nvim' -- Collaborative editing
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
     use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
@@ -88,7 +94,7 @@ vim.o.breakindent = true
 --Set tab width
 vim.o.tabstop = 4
 
---Set shiftwidth 
+--Set shiftwidth
 vim.o.shiftwidth = 4
 
 --Set expandtab
@@ -228,6 +234,99 @@ vim.api.nvim_exec( [[ hi! CursorWord gui=underline cterm=undercurl ]], false)
 -- Y yank until the end of line
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
 
+-- nvim-cmp initialization
+if (is_module_available('cmp')) then
+    local cmp = require'cmp'
+    cmp.setup({
+        snippet = {
+            expand = function(args)
+                require('luasnip').lsp_expand(args.body)
+              end,
+        },
+        mapping = {
+            ['<Down>'] = cmp.config.disable,
+            ['<Up>'] = cmp.config.disable,
+            ['<Tab>'] = cmp.config.disable,
+            ['<S-Tab>'] = cmp.config.disable,
+            ['<C-n>'] = cmp.config.disable,
+            ['<C-p>'] = cmp.config.disable,
+            ['<C-y>'] = cmp.config.disable,
+            ['<C-e>'] = cmp.config.disable,
+            ['<CR>'] = cmp.config.disable,
+        },
+        sources = cmp.config.sources({
+            { name = 'luasnip' },
+            { name = 'nvim_lsp' },
+        }, {
+            { name = 'buffer' },
+        })
+    })
+     -- Set configuration for specific filetype.
+    cmp.setup.filetype('gitcommit', {
+        sources = cmp.config.sources({
+            { name = 'cmp_git' },
+        }, {
+            { name = 'buffer' },
+        })
+    })
+    -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+    cmp.setup.cmdline('/', {
+        sources = {
+            { name = 'buffer' }
+        }
+    })
+    -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+    cmp.setup.cmdline(':', {
+        sources = cmp.config.sources({
+            { name = 'path' }
+        }, {
+            { name = 'cmdline' }
+        })
+    })
+
+    _G.vimrc = _G.vimrc or {}
+    _G.vimrc.cmp = _G.vimrc.cmp or {}
+    _G.vimrc.cmp.has_words_before = function()
+        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+        return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+    end
+    local luasnip = is_module_available('luasnip') and require'luasnip'
+    local cmp = is_module_available('cmp') and require'cmp'
+    local types = is_module_available('cmp') and require'cmp.types'
+    _G.vimrc.cmp.cb_tab = function()
+        if luasnip and luasnip.jumpable(1) then
+            luasnip.jump(1)
+        elseif cmp and cmp.visible() then
+            cmp.select_next_item()
+        elseif luasnip and luasnip.expand_or_jumpable() then
+            luasnip.expand_or_jump()
+        elseif cmp and _G.vimrc.cmp.has_words_before() then
+            cmp.complete()
+        else
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n', true)
+        end
+    end
+    _G.vimrc.cmp.cb_s_tab = function()
+        if luasnip.jumpable(-1) then
+            luasnip.jump(-1)
+        elseif cmp.visible() then
+            cmp.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert })
+        elseif luasnip.jumpable(-1) then
+            luasnip.jump(-1)
+        end
+    end
+    _G.vimrc.cmp.cb_s_cr = function()
+        if cmp.visible() and cmp.get_active_entry()
+            then cmp.confirm()
+        end
+    end
+    _G.vimrc.cmp.cb_c_x = function()
+        if luasnip.expandable() then
+            luasnip.expand()
+        end
+    end
+end
+
 -- LSP settings
 if (is_module_available('lspconfig')) then
     local nvim_lsp = require 'lspconfig'
@@ -238,6 +337,9 @@ if (is_module_available('lspconfig')) then
 
     local capabilities = vim.lsp.protocol.make_client_capabilities()
     capabilities.textDocument.completion.completionItem.snippetSupport = true
+    if is_module_available('cmp_nvim_lsp') then
+        capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+    end
 
     -- Enable the following language servers
     local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver' }
@@ -307,60 +409,12 @@ end
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = 'menuone,noselect'
 
--- Compe initialization
-if (is_module_available('compe')) then
-    require('compe').setup {
-        source = {
-            path = true,
-            nvim_lsp = true,
-            luasnip = true,
-            buffer = false,
-            calc = false,
-            nvim_lua = false,
-            vsnip = false,
-            ultisnips = false,
-        },
-    }
-end
-
 -- luasnip initialization
-if (is_module_available('luasnip')) then
-    local luasnip = require 'luasnip'
-
-    local t = function(str)
-        return vim.api.nvim_replace_termcodes(str, true, true, true)
-    end
-
-    local check_back_space = function()
-        local col = vim.fn.col '.' - 1
-        if col == 0 or vim.fn.getline('.'):sub(col, col):match '%s' then
-            return true
-        else
-            return false
-        end
-    end
-
-    _G.tab_complete = function()
-        if vim.fn.pumvisible() == 1 then
-            return t '<C-n>'
-        elseif luasnip.expand_or_jumpable() then
-            return t '<Plug>luasnip-expand-or-jump'
-        elseif check_back_space() then
-            return t '<Tab>'
-        else
-            return vim.fn['compe#complete']()
-        end
-    end
-
-    _G.s_tab_complete = function()
-        if vim.fn.pumvisible() == 1 then
-            return t '<C-p>'
-        elseif luasnip.jumpable(-1) then
-            return t '<Plug>luasnip-jump-prev'
-        else
-            return t '<S-Tab>'
-        end
-    end
+if is_module_available('luasnip') then
+    require'luasnip'.config.setup({
+        enable_autosnippets = true,
+    })
+    require'luasnip.loaders.from_snipmate'.load()
 end
 
 --twilight.nvim
@@ -398,9 +452,9 @@ if (is_module_available('dap')) then
     }
     dap.configurations.c = dap.configurations.cpp
     dap.configurations.rust = dap.configurations.cpp
-    dap.configurations.lua = { 
-        { 
-            type = 'nlua', 
+    dap.configurations.lua = {
+        {
+            type = 'nlua',
             request = 'attach',
             name = "Attach to running Neovim instance",
             host = function()
@@ -438,7 +492,7 @@ if (is_module_available('which-key')) then
         ['<A-d>'] = { [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], 'Close terminal' },
     }, { mode = 't', prefix = "", noremap =true, silent = true })
 
-    -- Normal mode without <leader> 
+    -- Normal mode without <leader>
     wk.register({
         ['g'] = {
             ['name'] = 'Go to',
@@ -458,7 +512,7 @@ if (is_module_available('which-key')) then
         ['k'] = { 'v:count == 0 ? "gk" : "k"', 'Move cursor up' },
     }, { mode = 'n', prefix = "", noremap = true, silent = true, expr = true })
 
-    -- Normal mode with <leader> 
+    -- Normal mode with <leader>
     wk.register({
         ['c'] = {
             ['name'] = 'Code actions',
@@ -488,7 +542,7 @@ if (is_module_available('which-key')) then
             ['d'] = { [[<cmd>lua require'dap'.clear_breakpoints()<CR>]], 'Clear all breakpoints' },
             ['n'] = { [[<cmd>lua require'dap'.step_over()<CR>]], 'Step over' },
             ['g'] = { [[<cmd>lua require'dap'.run_to_cursor()<CR>]], 'Run to cursor' },
-            ['s'] = { 
+            ['s'] = {
                 ['name'] = 'Step operations',
                 ['i'] = { [[<cmd>lua require'dap'.step_into()<CR>]], 'Step into' },
                 ['o'] = { [[<cmd>lua require'dap'.step_out()<CR>]], 'Step out' },
@@ -521,7 +575,7 @@ if (is_module_available('which-key')) then
             ['p'] = { [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], 'Preview definition' },
             ['l'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], 'Show line diagnostics' },
             ['c'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], 'Show cursor diagnostics' },
-            ['j'] = { 
+            ['j'] = {
                 ['name'] = 'Jump',
                 ['n'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], 'Jump to next' },
                 ['p'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], 'Jump to previous' },
@@ -556,7 +610,7 @@ if (is_module_available('which-key')) then
         ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
     }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
-    -- Visual mode with <leader> 
+    -- Visual mode with <leader>
     wk.register({
         ['c'] = {
             ['name'] = 'Range code actions',
@@ -564,17 +618,11 @@ if (is_module_available('which-key')) then
         },
     }, { mode = 'v', prefix = '<leader>', noremap = true, silent = true })
 
-    -- Insert mode without <leader>
     wk.register({
-        ['<Tab>'] = { 'v:lua.tab_complete()', 'Tab complete next' },
-        ['<S-Tab>'] = { 'v:lua.s_tab_complete()', 'Tab complete previous' },
-        ['<CR>'] = { 'compe#confirm("<cr>")', 'Confirm completion' },
-        ['<C-Space>'] = { 'compe#complete()', 'Complete' },
-    }, { mode = 'i', prefix = '', noremap = true, silent = true, expr = true })
-
-    -- Selection mode without <leader>
-    wk.register({
-        ['<Tab>'] = { 'v:lua.tab_complete()', 'Tab complete' },
-        ['<S-Tab>'] = { 'v:lua.s_tab_complete()', 'Tab complete previous' },
-    }, { mode = 's', prefix = '', noremap = true, silent = true, expr = true })
+        ['<Tab>'] = { [[<cmd>lua vimrc.cmp.cb_tab()<CR>]], '' },
+        ['<S-Tab>'] = { [[<cmd>lua vimrc.cmp.cb_s_tab()<CR>]], '' },
+        ['<S-CR>'] = { [[<cmd>lua vimrc.cmp.cb_s_cr()<CR>]], '' },
+        ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], '' },
+    }, { mode = 'i', prefix = '', noremap = true, silent = true})
 end
+
