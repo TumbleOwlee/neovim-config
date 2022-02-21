@@ -622,10 +622,10 @@ if (is_module_available('which-key')) then
     }, { mode = 'v', prefix = '<leader>', noremap = true, silent = true })
 
     wk.register({
-        ['<Tab>'] = { [[<cmd>lua vimrc.cmp.cb_tab()<CR>]], '' },
-        ['<S-Tab>'] = { [[<cmd>lua vimrc.cmp.cb_s_tab()<CR>]], '' },
-        ['<S-CR>'] = { [[<cmd>lua vimrc.cmp.cb_s_cr()<CR>]], '' },
-        ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], '' },
+        ['<Tab>'] = { [[<cmd>lua vimrc.cmp.cb_tab()<CR>]], 'Move to next completion item' },
+        ['<S-Tab>'] = { [[<cmd>lua vimrc.cmp.cb_s_tab()<CR>]], 'Move to previous completion item' },
+        ['<S-CR>'] = { [[<cmd>lua vimrc.cmp.cb_s_cr()<CR>]], 'Confirm completion item' },
+        ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], 'Expand snippet' },
     }, { mode = 'i', prefix = '', noremap = true, silent = true})
 end
 
