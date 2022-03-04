@@ -71,6 +71,7 @@ require('packer').startup(function()
     use { 'folke/todo-comments.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Todo listing
     use 'mfussenegger/nvim-dap' -- Debug adapter protocol
     use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
+    use 'sbdchd/neoformat' -- Extend formatting support
 end)
 
 --Incremental live completion
