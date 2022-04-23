@@ -7,7 +7,17 @@ platform:
   arch: arm64
   
 steps:
-- name: Test Setup
-  image: ubuntu:latest
+- name: Create PluginCache
+  pull: never
+  image: neovim
   commands:
-  - echo "Successful"
+  - echo "Install neovim configuration"
+  - mkdir -p ~/.config/nvim
+  - cp ./init.lua ~/.config/nvim/init.lua || exit 1
+  - echo "Install plugins"
+  - nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
+  - echo "Archive cache"
+  - cd ~
+  - tar cvfz /tmp/PluginCache.tar.gz .local/share/nvim/ .config/nvim
+  - echo "Upload archive"
+  - echo "UPLOAD MISSING"
