@@ -14,6 +14,8 @@ steps:
   - echo "Install neovim configuration"
   - mkdir -p ~/.config/nvim
   - cp ./init.lua ~/.config/nvim/init.lua || exit 1
+  - echo "Autoinstall packer"
+  - nvim --headless -c q
   - echo "Install plugins"
   - nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
   - echo "Archive cache"
