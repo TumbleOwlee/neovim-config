@@ -1,0 +1,13 @@
+name: default
+type: docker
+kind: pipeline
+
+platform:
+  os: linux
+  arch: arm64
+  
+steps:
+- name: Test Setup
+  image: ubuntu:latest
+  commands:
+  - echo "Successful"
