@@ -51,6 +51,7 @@ require('packer').startup(function()
     use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Add git related info in the signs columns and popups
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
+    use 'nvim-lua/lsp_extensions.nvim'
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
     use 'tami5/lspsaga.nvim' -- lsp extension
     use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
@@ -58,7 +59,11 @@ require('packer').startup(function()
     use 'hrsh7th/cmp-buffer'
     use 'hrsh7th/cmp-path'
     use 'hrsh7th/cmp-cmdline'
-    use 'L3MON4D3/LuaSnip' -- Snippets plugin
+    use 'hrsh7th/cmp-nvim-lsp-document-symbol'
+    use 'hrsh7th/cmp-copilot'
+    use 'ray-x/lsp_signature.nvim'
+    use 'github/copilot.vim'
+    use { 'L3MON4D3/LuaSnip', after = 'nvim-cmp' } -- Snippets plugin
     use 'saadparwaiz1/cmp_luasnip'
     use 'honza/vim-snippets' -- Code snippets
     use 'jbyuki/instant.nvim' -- Collaborative editing
@@ -112,6 +117,9 @@ vim.o.smartcase = true
 vim.o.updatetime = 250
 vim.wo.signcolumn = 'yes'
 
+-- Disable copilot auto-completion
+vim.g.copilot_no_tab_map = true
+
 --Set colorscheme (order is important here)
 vim.o.termguicolors = true
 vim.g.onedark_terminal_italics = 2
@@ -151,6 +159,12 @@ end
 --todo-comments.nvim
 if (is_module_available('todo-comments')) then
     require'todo-comments'.setup{ }
+end
+
+-- signature
+if (is_module_available('lsp_signature')) then
+    local cfg = {}
+    require'lsp_signature'.setup(cfg)
 end
 
 --Create new highlight group (necessary for instant.nvim)
@@ -218,6 +232,17 @@ if (is_module_available('telescope')) then
     }
 end
 
+-- lsp_extensions : Currently broken somehow
+if (is_module_available('lsp_extensions')) then
+    require'lsp_extensions'.inlay_hints{
+        highlight = "Comment",
+        prefix = " > ",
+        aligned = false,
+        only_current_line = false,
+        enabled = { "TypeHint", "ChainingHint", "ParameterHint" }
+    }
+end
+
 -- Highlight on yank
 vim.api.nvim_exec(
 [[
@@ -241,7 +266,11 @@ if (is_module_available('cmp')) then
     cmp.setup({
         snippet = {
             expand = function(args)
-                require('luasnip').lsp_expand(args.body)
+                local luasnip = require'luasnip'
+                if not luasnip then
+                    return
+                end
+                luasnip.lsp_expand(args.body)
               end,
         },
         mapping = {
@@ -258,6 +287,9 @@ if (is_module_available('cmp')) then
         sources = cmp.config.sources({
             { name = 'luasnip' },
             { name = 'nvim_lsp' },
+            { name = 'nvim_lsp_document_symbol' },
+            { name = 'copilot' },
+            { name = 'nvim_lsp_signature_help' },
         }, {
             { name = 'buffer' },
         })
@@ -292,7 +324,6 @@ if (is_module_available('cmp')) then
         return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
     end
     local luasnip = is_module_available('luasnip') and require'luasnip'
-    local cmp = is_module_available('cmp') and require'cmp'
     local types = is_module_available('cmp') and require'cmp.types'
     _G.vimrc.cmp.cb_tab = function()
         if luasnip and luasnip.jumpable(1) then
@@ -320,8 +351,14 @@ if (is_module_available('cmp')) then
     -- By default SHIFT-CR may not work. If so, you have to configure your terminal to send the correct codes.
     -- See https://stackoverflow.com/questions/16359878/how-to-map-shift-enter
     _G.vimrc.cmp.cb_s_cr = function()
-        if cmp.visible() and cmp.get_active_entry() then 
+        if cmp.visible() and cmp.get_active_entry() then
             cmp.confirm()
+        else
+            cmp.select_next_item()
+            cmp.select_prev_item()
+            if cmp.get_active_entry() then
+                cmp.confirm()
+            end
         end
     end
     _G.vimrc.cmp.cb_c_x = function()
@@ -337,6 +374,7 @@ if (is_module_available('lspconfig')) then
     local on_attach = function(_, bufnr)
         vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
         vim.cmd [[ command! Format execute 'lua vim.lsp.buf.formatting()' ]]
+        require'lsp_signature'.on_attach()
     end
 
     local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -345,12 +383,48 @@ if (is_module_available('lspconfig')) then
         capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
     end
 
+    -- Lua LSP
+    local settings = {
+        Lua = {
+            runtime = {
+                version = 'LuaJIT',
+                path = {
+                    '?.lua',
+                    '?/init.lua',
+                    vim.fn.expand'~/.luarocks/share/lua/5.3/?.lua',
+                    vim.fn.expand'~/.luarocks/share/lua/5.3/?/init.lua',
+                    '/usr/share/5.3/?.lua',
+                    '/usr/share/lua/5.3/?/init.lua'
+                }
+            },
+            diagnostics = {
+                globals = {'vim'},
+            },
+            workspace = {
+                library = {
+                    vim.api.nvim_get_runtime_file("", true),
+                    vim.fn.expand'~/.luarocks/share/lua/5.3',
+                    '/usr/share/lua/5.3'
+                }
+            },
+            telemetry = {
+                enable = false,
+            },
+        },
+    }
+
     -- Enable the following language servers
-    local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver' }
+    local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua' }
     for _, lsp in ipairs(servers) do
+        local cmd = nvim_lsp[lsp].cmd
+        if lsp == 'sumneko_lua' then
+            cmd = { os.getenv('HOME')..'/Git/Github/lua-language-server/bin/lua-language-server' }
+        end
         nvim_lsp[lsp].setup {
+            cmd = cmd,
             on_attach = on_attach,
             capabilities = capabilities,
+            settings = settings,
         }
     end
 end
@@ -411,7 +485,7 @@ if (is_module_available('nvim-treesitter.configs')) then
 end
 
 -- Set completeopt to have a better completion experience
-vim.o.completeopt = 'menuone,noselect'
+vim.o.completeopt = 'menu,menuone,noselect'
 
 -- luasnip initialization
 if is_module_available('luasnip') then
