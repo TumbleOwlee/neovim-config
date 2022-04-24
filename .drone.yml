@@ -37,4 +37,6 @@ steps:
   when:
     event: 
     - tag
+    ref:
+    - refs/tags/nightly
 
