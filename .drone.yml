@@ -10,7 +10,22 @@ platform:
   arch: arm64
   
 steps:
-- name: Create artifact
+- name: Check neovim setup
+  pull: never
+  image: neovim
+  commands:
+  - echo "Setup init.lua"
+  - mkdir -p ~/.config/nvim
+  - cp ./init.lua ~/.config/nvim/init.lua || exit 1
+  - echo "Setup packer"
+  - git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+  - echo "Install plugins"
+  - nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
+  when:
+    branch:
+      exclude:
+      - main
+- name: Check neovim setup and create artifact
   pull: never
   image: neovim
   commands:
@@ -24,6 +39,11 @@ steps:
   - echo "Create artifact"
   - cd ~
   - tar cvfz /drone/src/neovim-config.tar.gz .local/share/nvim/ .config/nvim
+  when:
+    event:
+    - tag
+    ref:
+    - refs/tags/nightly
 - name: Upload artifact
   image: plugins/github-release:1.0.0
   settings:
