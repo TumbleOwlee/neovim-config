@@ -2,42 +2,18 @@ name: Plugin Installation
 
 on:
   push:
+    branches:
+    - main
   pull_request:
     branches:
     - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        
-      - name: Checkout packer
-        uses: actions/checkout@v3
-        with:
-          repository: 'wbthomason/packer.nvim'
-          path: 'packer.nvim'
-      
-      - name: Install configuration
-        run: |
-          mkdir -p ~/.config/nvim/ 
-          cp ./init.lua ~/.config/nvim/init.lua || exit 1
-          mkdir -p ~/.local/share/nvim/site/pack/packer/start/
-          mv ./packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-        
-      - name: Setup Neovim
-        uses: MunifTanjim/setup-neovim-action@v1.0.0
-        with:
-          tag: stable
-        
-      - name: Install plugins
-        run: |
-          nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerInstall'
-      
-      - name: Run nightly-tag
+      - name: Update nightly tag
         uses: EndBug/latest-tag@latest
         if: github.ref == 'refs/heads/main'
         with:
