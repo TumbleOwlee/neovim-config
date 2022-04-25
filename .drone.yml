@@ -1,3 +1,4 @@
+---
 name: default
 type: docker
 kind: pipeline
@@ -60,3 +61,8 @@ steps:
     ref:
     - refs/tags/nightly
 
+---
+kind: signature
+hmac: 655ffffa28e65afa5dd059c24a79cd6344dbb12c667a60ace65c4227e4ef5563
+
+...
