@@ -340,11 +340,11 @@ if (is_module_available('cmp')) then
         end
     end
     _G.vimrc.cmp.cb_s_tab = function()
-        if luasnip.jumpable(-1) then
+        if luasnip and luasnip.jumpable(-1) then
             luasnip.jump(-1)
         elseif cmp.visible() then
             cmp.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert })
-        elseif luasnip.jumpable(-1) then
+        elseif luasnip and luasnip.jumpable(-1) then
             luasnip.jump(-1)
         end
     end
@@ -363,7 +363,7 @@ if (is_module_available('cmp')) then
         end
     end
     _G.vimrc.cmp.cb_c_x = function()
-        if luasnip.expandable() then
+        if luasnip and luasnip.expandable() then
             luasnip.expand()
         end
     end
