@@ -69,7 +69,7 @@ require('packer').startup(function()
     use 'honza/vim-snippets' -- Code snippets
     use 'jbyuki/instant.nvim' -- Collaborative editing
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
-    use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, config = function() require'nvim-tree'.setup {} end }
+    use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, tag = 'nightly' }
     use 'akinsho/bufferline.nvim' -- buffer line
     use 'folke/which-key.nvim' -- show keybindings as list
     use 'folke/twilight.nvim' -- dims inactive potions of code
@@ -78,6 +78,7 @@ require('packer').startup(function()
     use 'mfussenegger/nvim-dap' -- Debug adapter protocol
     use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
     use 'sbdchd/neoformat' -- Extend formatting support
+    use { 'windwp/nvim-autopairs', config = function() require'nvim-autopairs'.setup {} end } -- auto closing brackets
 end)
 
 --Incremental live completion
@@ -130,20 +131,40 @@ vim.cmd [[silent! colorscheme onedark]]
 vim.g.lightline = {
     colorscheme = 'onedark',
     active = { left = { { 'mode', 'paste' }, { 'gitbranch', 'readonly', 'filename', 'modified' } } },
-    component_function = { gitbranch = 'fugitive#head' },
+    component_function = { gitbranch = 'FugitiveHead' },
 }
 
 --Dashboard default fuzzy search plugin
-vim.g.dashboard_default_executive = 'telescope'
-vim.g.dashboard_custom_shortcut = {
-     ['last_session'] = 'SPC s l',
-     ['find_history'] = 'SPC d h',
-     ['find_file'] = 'SPC d f',
-     ['new_file'] = 'SPC d n',
-     ['change_colorscheme'] = 'SPC d c',
-     ['find_word'] = 'SPC d w',
-     ['book_marks'] = 'SPC d b',
- }
+if (is_module_available('dashboard')) then
+    local home = os.getenv('HOME')
+    local db = require('dashboard')
+    db.custom_header = {
+        '                                                       ',
+        '                                                       ',
+        '                                                       ',
+        ' ███╗   ██╗ ███████╗ ██████╗  ██╗   ██╗ ██╗ ███╗   ███╗',
+        ' ████╗  ██║ ██╔════╝██╔═══██╗ ██║   ██║ ██║ ████╗ ████║',
+        ' ██╔██╗ ██║ █████╗  ██║   ██║ ██║   ██║ ██║ ██╔████╔██║',
+        ' ██║╚██╗██║ ██╔══╝  ██║   ██║ ╚██╗ ██╔╝ ██║ ██║╚██╔╝██║',
+        ' ██║ ╚████║ ███████╗╚██████╔╝  ╚████╔╝  ██║ ██║ ╚═╝ ██║',
+        ' ╚═╝  ╚═══╝ ╚══════╝ ╚═════╝    ╚═══╝   ╚═╝ ╚═╝     ╚═╝',
+        '                                                       ',
+        '                                                       ',
+        '                                                       ',
+        '                                                       ',
+    }
+    db.custom_center = {
+        a = { icon = "  ", desc = "Find File                 ", shortcut = "SPC t f f", action = "Telescope find_files"},
+        b = { icon = "  ", desc = "Recents                   ", shortcut = "SPC t ?  ", action = "Telescope oldfiles"},
+        c = { icon = "  ", desc = "Find Word                 ", shortcut = "SPC t l  ", action = "Telescope live_grep"},
+        d = { icon = "  ", desc = "New File                  ", shortcut = "SPC d n  ", action = "DashboardNewFile"},
+        e = { icon = "  ", desc = "Bookmarks                 ", shortcut = "SPC t m  ", action = "Telescope marks"},
+        f = { icon = "  ", desc = "Load Last Session         ", shortcut = "SPC s l  ", action = "SessionLoad"},
+        g = { icon = "  ", desc = "Update Plugins            ", shortcut = "SPC p u  ", action = "PackerUpdate"},
+        i = { icon = "  ", desc = "Exit                      ", shortcut = "SPC p q  ", action = "exit"}
+    }
+    db.custom_footer = {'type  :help<Enter>  or  <F1>  for on-line help'}
+ end
 
 --LspSaga
 if (is_module_available('lspsaga')) then
@@ -196,13 +217,13 @@ end
 if (is_module_available('indent_blankline')) then
     vim.opt.list = true
     vim.opt.listchars:append("eol:↴")
-    vim.g.indent_blankline_char = '┊'
-    vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }
-    vim.g.indent_blankline_buftype_exclude = { 'terminal', 'nofile' }
-    vim.g.indent_blankline_char_highlight = 'LineNr'
-    vim.g.indent_blankline_show_trailing_blankline_indent = true
     require("indent_blankline").setup {
+        char = '┊',
+        char_highlight = 'LineNr',
         show_end_of_line = true,
+        filetype_exclude = { 'help', 'packer', 'dashboard' },
+        buftype_exclude = { 'terminal', 'nofile' },
+        show_trailing_blankline_indent = true,
     }
 end
 
@@ -261,8 +282,14 @@ vim.api.nvim_exec( [[ hi! CursorWord gui=underline cterm=undercurl ]], false)
 -- Y yank until the end of line
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
 
+-- nvim-autopairs
+if (is_module_available('nvim-autopairs')) then
+    require('nvim-autopairs').setup{}
+end
+
 -- nvim-cmp initialization
 if (is_module_available('cmp')) then
+    local cmp_autopairs = require('nvim-autopairs.completion.cmp')
     local cmp = require'cmp'
     cmp.setup({
         snippet = {
@@ -317,6 +344,8 @@ if (is_module_available('cmp')) then
             { name = 'cmdline' }
         })
     })
+    -- add nvim-autopairs
+    cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done({ map_char = { tex = '' } }))
 
     _G.vimrc = _G.vimrc or {}
     _G.vimrc.cmp = _G.vimrc.cmp or {}
@@ -327,7 +356,9 @@ if (is_module_available('cmp')) then
     local luasnip = is_module_available('luasnip') and require'luasnip'
     local types = is_module_available('cmp') and require'cmp.types'
     _G.vimrc.cmp.cb_tab = function()
-        if luasnip and luasnip.jumpable(1) then
+        if not _G.vimrc.cmp.has_words_before() then
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n', true)
+        elseif luasnip and luasnip.jumpable(1) then
             luasnip.jump(1)
         elseif cmp and cmp.visible() then
             cmp.select_next_item()
@@ -605,11 +636,6 @@ if (is_module_available('which-key')) then
         ['D'] = { [[<cmd>lua vim.lsp.buf.type_definition()<CR>]], 'Type definition' },
         ['d'] = { -- Dashboard
             ['name'] = 'Dashboard operations.',
-            ['h'] = { [[<cmd>DashboardFindHistory<CR>]], 'Find history' },
-            ['f'] = { [[<cmd>DashboardFindFile<CR>]], 'Find file' },
-            ['c'] = { [[<cmd>DashboardChangeColorscheme<CR>]], 'Change colorscheme' },
-            ['w'] = { [[<cmd>DashboardFindWord<CR>]], 'Find word' },
-            ['b'] = { [[<cmd>DashboardJumpMark<CR>]], 'Jump bookmark' },
             ['n'] = { [[<cmd>DashboardNewFile<CR>]], 'New file' },
         },
         ['g'] = {
@@ -636,7 +662,7 @@ if (is_module_available('which-key')) then
                 ['s'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames)<CR>]], 'Show scopes' },
             },
             ['p'] = { [[<cmd>lua require'dap'.pause()<CR>]], 'Pause thread' },
-            ['r'] = { [[<cmd>lua require'dap'.repl.toggle()<CR>]], 'Toggle interactive REPL console' },
+            ['f'] = { [[<cmd>lua require'dap'.repl.toggle()<CR>]], 'Toggle interactive REPL console' },
             ['v'] = { [[<cmd>lua require'dap.ui.widgets').hover()<CR>]], 'Show value of expr under cursor' },
         },
         ['l'] = {
@@ -678,6 +704,7 @@ if (is_module_available('which-key')) then
                 ['f'] = { [[<cmd>lua require('telescope.builtin').find_files({previewer = false})<CR>]], 'Find files' },
                 ['z'] ={ [[<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<CR>]], 'Fuzzy find' },
             },
+            ['m'] = { [[<cmd>lua require('telescope.builtin').marks()<CR>]], 'Help tags' },
             ['h'] = { [[<cmd>lua require('telescope.builtin').help_tags()<CR>]], 'Help tags' },
             ['t'] = { [[<cmd>lua require('telescope.builtin').tags()<CR>]], 'Tags' },
             ['s'] = { [[<cmd>lua require('telescope.builtin').grep_string()<CR>]], 'Grep string' },
@@ -686,6 +713,11 @@ if (is_module_available('which-key')) then
             ['?'] = { [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], 'Old files' },
         },
         ['z'] = { [[<cmd>Twilight<CR>]], 'Toggle zen mode' },
+        ['p'] = {
+            ['name'] = 'Nvim operations',
+            ['u'] = { [[<cmd>PackerUpdate<CR>]], 'Packer update' },
+            ['q'] = { [[<cmd>exit<CR>]], 'Close nvim' },
+        },
         ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
     }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
