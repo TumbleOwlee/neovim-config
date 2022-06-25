@@ -358,10 +358,10 @@ if (is_module_available('cmp')) then
     _G.vimrc.cmp.cb_tab = function()
         if not _G.vimrc.cmp.has_words_before() then
             vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n', true)
+        elseif cmp and cmp.visible() then
+            cmp.select_next_item({ behavior = types.cmp.SelectBehavior.Insert })
         elseif luasnip and luasnip.jumpable(1) then
             luasnip.jump(1)
-        elseif cmp and cmp.visible() then
-            cmp.select_next_item()
         elseif luasnip and luasnip.expand_or_jumpable() then
             luasnip.expand_or_jump()
         elseif cmp and _G.vimrc.cmp.has_words_before() then
@@ -371,10 +371,10 @@ if (is_module_available('cmp')) then
         end
     end
     _G.vimrc.cmp.cb_s_tab = function()
-        if luasnip and luasnip.jumpable(-1) then
-            luasnip.jump(-1)
-        elseif cmp.visible() then
+        if cmp.visible() then
             cmp.select_prev_item({ behavior = types.cmp.SelectBehavior.Insert })
+        elseif luasnip and luasnip.jumpable(-1) then
+            luasnip.jump(-1)
         elseif luasnip and luasnip.jumpable(-1) then
             luasnip.jump(-1)
         end
@@ -734,6 +734,8 @@ if (is_module_available('which-key')) then
         ['<S-Tab>'] = { [[<cmd>lua vimrc.cmp.cb_s_tab()<CR>]], 'Move to previous completion item' },
         ['<S-CR>'] = { [[<cmd>lua vimrc.cmp.cb_s_cr()<CR>]], 'Confirm completion item' },
         ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], 'Expand snippet' },
+        ['<C-n>'] = { [[<cmd>lua if require'luasnip'.jumpable(1) then require'luasnip'.jump(1) end<CR>]], 'Jump to next position' },
+        ['<C-p>'] = { [[<cmd>lua if require'luasnip'.jumpable(-1) then require'luasnip'.jump(-1) end<CR>]], 'Jump to next position' },
     }, { mode = 'i', prefix = '', noremap = true, silent = true})
 end
 
