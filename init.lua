@@ -53,6 +53,7 @@ require('packer').startup(function()
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
     use 'nvim-lua/lsp_extensions.nvim'
+    use 'williamboman/nvim-lsp-installer' -- auto install of language servers
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
     use 'tami5/lspsaga.nvim' -- lsp extension
     use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
@@ -196,6 +197,9 @@ local function new_hi_group(name, fg, bg)
     vim.cmd("highlight " .. name .. " guifg=" .. fg .. " guibg="..bg)
     return name
 end
+
+--Set background opacity
+vim.cmd("highlight Normal guibg=none")
 
 -- instant.nvim
 if (is_module_available('instant')) then
@@ -445,19 +449,27 @@ if (is_module_available('lspconfig')) then
         },
     }
 
-    -- Enable the following language servers
-    local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua' }
-    for _, lsp in ipairs(servers) do
-        local cmd = nvim_lsp[lsp].cmd
-        if lsp == 'sumneko_lua' then
-            cmd = { os.getenv('HOME')..'/Git/Github/lua-language-server/bin/lua-language-server' }
+    if (is_module_available('nvim-lsp-installer')) then
+        local lsp_installer = require'nvim-lsp-installer'
+        lsp_installer.setup({
+            automatic_installation = true,
+            ui = {
+                icons = {
+                    server_installed = "✓",
+                    server_pending = "➜",
+                    server_uninstalled = "✗"
+                }
+            }
+        })
+        for _, lsp in ipairs(lsp_installer.get_installed_servers()) do
+            local cmd = nvim_lsp[lsp.name].cmd
+            nvim_lsp[lsp.name].setup {
+                cmd = cmd,
+                on_attach = on_attach,
+                capabilities = capabilities,
+                settings = settings,
+            }
         end
-        nvim_lsp[lsp].setup {
-            cmd = cmd,
-            on_attach = on_attach,
-            capabilities = capabilities,
-            settings = settings,
-        }
     end
 end
 
