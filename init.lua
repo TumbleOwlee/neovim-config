@@ -55,16 +55,14 @@ require('packer').startup(function()
     use 'nvim-lua/lsp_extensions.nvim'
     use 'williamboman/nvim-lsp-installer' -- auto install of language servers
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
-    use 'tami5/lspsaga.nvim' -- lsp extension
+    use 'kkharji/lspsaga.nvim' -- lsp extension
     use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
     use 'hrsh7th/cmp-nvim-lsp'
     use 'hrsh7th/cmp-buffer'
     use 'hrsh7th/cmp-path'
     use 'hrsh7th/cmp-cmdline'
     use 'hrsh7th/cmp-nvim-lsp-document-symbol'
-    use 'hrsh7th/cmp-copilot'
     use 'ray-x/lsp_signature.nvim'
-    use 'github/copilot.vim'
     use { 'L3MON4D3/LuaSnip', after = 'nvim-cmp' } -- Snippets plugin
     use 'saadparwaiz1/cmp_luasnip'
     use 'honza/vim-snippets' -- Code snippets
@@ -120,9 +118,6 @@ vim.o.smartcase = true
 vim.o.updatetime = 250
 vim.wo.signcolumn = 'yes'
 
--- Disable copilot auto-completion
-vim.g.copilot_no_tab_map = true
-
 --Set colorscheme (order is important here)
 vim.o.termguicolors = true
 vim.g.onedark_terminal_italics = 2
@@ -175,7 +170,9 @@ end
 --bufferline.nvim
 if (is_module_available('bufferline')) then
     require'bufferline'.setup{
-        diagnostics = 'nvim_lsp'
+        options = {
+            diagnostics = 'nvim_lsp'
+        }
     }
 end
 
@@ -221,13 +218,22 @@ end
 if (is_module_available('indent_blankline')) then
     vim.opt.list = true
     vim.opt.listchars:append("eol:↴")
-    require("indent_blankline").setup {
-        char = '┊',
-        char_highlight = 'LineNr',
-        show_end_of_line = true,
-        filetype_exclude = { 'help', 'packer', 'dashboard' },
-        buftype_exclude = { 'terminal', 'nofile' },
-        show_trailing_blankline_indent = true,
+    require("ibl").setup {
+        indent = {
+            char = '┊',
+            highlight = 'LineNr',
+        },
+        scope = {
+            show_end = true,
+        },
+        exclude = {
+            filetypes = { 'help', 'packer', 'dashboard' },
+        },
+    --    buftype_exclude = { 'terminal', 'nofile' },
+        whitespace = {
+            highlight = highlight,
+            remove_blankline_trail = true,
+        }
     }
 end
 
@@ -320,7 +326,6 @@ if (is_module_available('cmp')) then
             { name = 'luasnip' },
             { name = 'nvim_lsp' },
             { name = 'nvim_lsp_document_symbol' },
-            { name = 'copilot' },
             { name = 'nvim_lsp_signature_help' },
         }, {
             { name = 'buffer' },
@@ -416,7 +421,7 @@ if (is_module_available('lspconfig')) then
     local capabilities = vim.lsp.protocol.make_client_capabilities()
     capabilities.textDocument.completion.completionItem.snippetSupport = true
     if is_module_available('cmp_nvim_lsp') then
-        capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+        capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
     end
 
     -- Lua LSP
@@ -750,4 +755,3 @@ if (is_module_available('which-key')) then
         ['<C-p>'] = { [[<cmd>lua if require'luasnip'.jumpable(-1) then require'luasnip'.jump(-1) end<CR>]], 'Jump to next position' },
     }, { mode = 'i', prefix = '', noremap = true, silent = true})
 end
-
