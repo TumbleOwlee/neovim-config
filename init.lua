@@ -461,8 +461,8 @@ if (is_module_available('lspconfig')) then
         local mason_lspconfig = require'mason-lspconfig'
         mason_lspconfig.setup {
             automatic_installation = true,
+    	}
         mason.setup({
-            automatic_installation = true,
             ui = {
                 icons = {
                     server_installed = "✓",
@@ -472,6 +472,7 @@ if (is_module_available('lspconfig')) then
             }
         })
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
+            name = name:gsub("-", "_")
             local cmd = nvim_lsp[name].cmd
             nvim_lsp[name].setup {
                 cmd = cmd,
