@@ -53,7 +53,8 @@ require('packer').startup(function()
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
     use 'nvim-lua/lsp_extensions.nvim'
-    use 'williamboman/nvim-lsp-installer' -- auto install of language servers
+    use 'williamboman/mason.nvim' -- auto install of language servers
+    use 'williamboman/mason-lspconfig.nvim'
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
     use 'kkharji/lspsaga.nvim' -- lsp extension
     use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
@@ -454,9 +455,13 @@ if (is_module_available('lspconfig')) then
         },
     }
 
-    if (is_module_available('nvim-lsp-installer')) then
-        local lsp_installer = require'nvim-lsp-installer'
-        lsp_installer.setup({
+    if (is_module_available('mason')) then
+        local mason = require'mason'
+        local mason_registry = require'mason-registry'
+        local mason_lspconfig = require'mason-lspconfig'
+        mason_lspconfig.setup {
+            automatic_installation = true,
+        mason.setup({
             automatic_installation = true,
             ui = {
                 icons = {
@@ -466,9 +471,9 @@ if (is_module_available('lspconfig')) then
                 }
             }
         })
-        for _, lsp in ipairs(lsp_installer.get_installed_servers()) do
-            local cmd = nvim_lsp[lsp.name].cmd
-            nvim_lsp[lsp.name].setup {
+        for _, name in ipairs(mason_registry.get_installed_package_names()) do
+            local cmd = nvim_lsp[name].cmd
+            nvim_lsp[name].setup {
                 cmd = cmd,
                 on_attach = on_attach,
                 capabilities = capabilities,
