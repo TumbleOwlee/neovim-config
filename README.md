@@ -1,5 +1,6 @@
-# Personal Neovim Configuration
+# Neovim Configuration
 
 [![Nightly](https://github-drone.code-ape.dev/api/badges/TumbleOwlee/neovim-config/status.svg?ref=refs/tags/nightly)](https://github-drone.code-ape.dev/TumbleOwlee/neovim-config)
 
-This repository contains my personal Neovim configuration file. It was crated based on ideas collected from other users and provides an easy setup on a new machine. It's aim is to get my previous setup done in lua instead of vimscript.
+This reposity contains my personal Neovim configuration. It is a collection of various plugins that I collected over the time. I'm keeping it up-to-date and will add or remove plugins anytime I find something useful or replace some plugin with a more modern version. 
+The configuration provides an easy entrance into a basic setup for software developer's.
