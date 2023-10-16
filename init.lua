@@ -611,6 +611,17 @@ if (is_module_available('dap')) then
     end
 end
 
+-- Snakemake
+vim.api.nvim_exec(
+[[
+augroup Snakemake
+autocmd!
+autocmd BufWritePost *.smk silent w !snakefmt - 2>/dev/null >/tmp/snakefmt && cat /tmp/snakefmt >%
+augroup end
+]],
+false
+)
+
 -- KEYBINDINGS
 
 --Remap space as leader key
