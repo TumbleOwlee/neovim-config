@@ -481,8 +481,15 @@ if (is_module_available('lspconfig')) then
                 }
             }
         })
+        name_mappings = {
+            python_lsp_server = 'pylsp',
+            lua_language_server = 'lua_ls'
+        }
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
             name = name:gsub("-", "_")
+            if name_mappings[name] ~= nil then
+                name = name_mappings[name]
+            end
             local cmd = nvim_lsp[name].cmd
             nvim_lsp[name].setup {
                 cmd = cmd,
