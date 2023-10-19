@@ -455,6 +455,14 @@ if (is_module_available('lspconfig')) then
                 enable = false,
             },
         },
+        pylsp = {
+            plugins = {
+                pycodestyle = {
+                    ignore = {'w391', 'E501'},
+                    maxLineLength = 120,
+                }
+            }
+        },
     }
 
     if (is_module_available('mason')) then
