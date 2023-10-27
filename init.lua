@@ -55,6 +55,7 @@ require('packer').startup(function()
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
     use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
     use 'nvim-lua/lsp_extensions.nvim'
+    use 'rcarriga/nvim-notify' -- prettify notifications
     use 'williamboman/mason.nvim' -- auto install of language servers
     use 'williamboman/mason-lspconfig.nvim'
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
@@ -276,6 +277,31 @@ if (is_module_available('lsp_extensions')) then
         only_current_line = false,
         enabled = { "TypeHint", "ChainingHint", "ParameterHint" }
     }
+end
+
+-- nvim-notify
+if is_module_available('notify') then
+    -- Change color of info
+    local change_color = function(lvl, fg)
+        vim.cmd("highlight Notify"..lvl.."Border guifg=" .. fg)
+        vim.cmd("highlight Notify"..lvl.."Icon guifg=" .. fg)
+        vim.cmd("highlight Notify"..lvl.."Title guifg=" .. fg)
+    end
+
+    change_color("INFO", "#8080ff")
+
+    local nvim_notify = require'notify'
+    nvim_notify.setup({
+        stages = "fade_in_slide_out",
+        timeout = 1500,
+        background_colour = "#2E3440",
+        render = "wrapped-compact",
+        max_width = 60,
+        max_height = 10,
+        minimum_width = 40,
+        fps = 45,
+    })
+    vim.notify = nvim_notify
 end
 
 -- Highlight on yank
