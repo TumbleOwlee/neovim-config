@@ -495,9 +495,11 @@ if (is_module_available('lspconfig')) then
         local mason = require'mason'
         local mason_registry = require'mason-registry'
         local mason_lspconfig = require'mason-lspconfig'
+        
         mason_lspconfig.setup {
             automatic_installation = true,
     	}
+        
         mason.setup({
             ui = {
                 icons = {
@@ -507,10 +509,12 @@ if (is_module_available('lspconfig')) then
                 }
             }
         })
+        
         name_mappings = {
             python_lsp_server = 'pylsp',
             lua_language_server = 'lua_ls'
         }
+        
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
             name = name:gsub("-", "_")
             if name_mappings[name] ~= nil then
