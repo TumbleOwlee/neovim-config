@@ -512,7 +512,8 @@ if (is_module_available('lspconfig')) then
         
         name_mappings = {
             python_lsp_server = 'pylsp',
-            lua_language_server = 'lua_ls'
+            lua_language_server = 'lua_ls',
+            r_languageserver = 'r_language_server'
         }
         
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
