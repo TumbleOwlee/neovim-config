@@ -81,7 +81,7 @@ require('packer').startup(function()
     use 'mfussenegger/nvim-dap' -- Debug adapter protocol
     use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
     use 'sbdchd/neoformat' -- Extend formatting support
-    use { 'windwp/nvim-autopairs', config = function() require'nvim-autopairs'.setup {} end } -- auto closing brackets
+    use { 'windwp/nvim-autopairs' } -- auto closing brackets
 end)
 
 --Incremental live completion
