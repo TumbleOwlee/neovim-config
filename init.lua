@@ -45,7 +45,7 @@ require('packer').startup(function()
     use 'tpope/vim-rhubarb' -- Fugitive-companion to interact with github
     use 'tpope/vim-commentary' -- "gc" to comment visual regions/lines
     use 'mboughaba/vim-lessmess' -- Remove trailing whitespaces
-    use 'glepnir/dashboard-nvim' -- Dashboard start page
+    use { 'nvimdev/dashboard-nvim', event = 'VimEnter', dependencies = { {'nvim-tree/nvim-web-devicons'}}} -- Dashboard start page
     use { 'folke/trouble.nvim', requires = 'kyazdani42/nvim-web-devicons', config = function() require('trouble').setup {} end } -- List of diagnostics
     use { 'nvim-telescope/telescope.nvim', requires = { { 'nvim-lua/popup.nvim' }, { 'nvim-lua/plenary.nvim' } } } -- UI to select things (files, grep results, open buffers...)
     use 'joshdick/onedark.vim' -- Theme inspired by Atom
@@ -138,32 +138,27 @@ vim.g.lightline = {
 if (is_module_available('dashboard')) then
     local home = os.getenv('HOME')
     local db = require('dashboard')
-    db.custom_header = {
-        '                                                       ',
-        '                                                       ',
-        '                                                       ',
-        ' ███╗   ██╗ ███████╗ ██████╗  ██╗   ██╗ ██╗ ███╗   ███╗',
-        ' ████╗  ██║ ██╔════╝██╔═══██╗ ██║   ██║ ██║ ████╗ ████║',
-        ' ██╔██╗ ██║ █████╗  ██║   ██║ ██║   ██║ ██║ ██╔████╔██║',
-        ' ██║╚██╗██║ ██╔══╝  ██║   ██║ ╚██╗ ██╔╝ ██║ ██║╚██╔╝██║',
-        ' ██║ ╚████║ ███████╗╚██████╔╝  ╚████╔╝  ██║ ██║ ╚═╝ ██║',
-        ' ╚═╝  ╚═══╝ ╚══════╝ ╚═════╝    ╚═══╝   ╚═╝ ╚═╝     ╚═╝',
-        '                                                       ',
-        '                                                       ',
-        '                                                       ',
-        '                                                       ',
-    }
-    db.custom_center = {
-        a = { icon = "  ", desc = "Find File                 ", shortcut = "SPC t f f", action = "Telescope find_files"},
-        b = { icon = "  ", desc = "Recents                   ", shortcut = "SPC t ?  ", action = "Telescope oldfiles"},
-        c = { icon = "  ", desc = "Find Word                 ", shortcut = "SPC t l  ", action = "Telescope live_grep"},
-        d = { icon = "  ", desc = "New File                  ", shortcut = "SPC d n  ", action = "DashboardNewFile"},
-        e = { icon = "  ", desc = "Bookmarks                 ", shortcut = "SPC t m  ", action = "Telescope marks"},
-        f = { icon = "  ", desc = "Load Last Session         ", shortcut = "SPC s l  ", action = "SessionLoad"},
-        g = { icon = "  ", desc = "Update Plugins            ", shortcut = "SPC p u  ", action = "PackerUpdate"},
-        i = { icon = "  ", desc = "Exit                      ", shortcut = "SPC p q  ", action = "exit"}
-    }
-    db.custom_footer = {'type  :help<Enter>  or  <F1>  for on-line help'}
+    db.setup({
+        theme = 'hyper',
+        disable_move = true,
+        shortcut_type = 'letter',
+        config = {
+            week_header = {
+                enable = true,
+            },
+            shortcut = {
+                a = { icon = " ", desc = "Find File", key = "f", action = "Telescope find_files"},
+                b = { icon = " ", desc = "Recents", key = "?", action = "Telescope oldfiles"},
+                c = { icon = " ", desc = "Find Word", key = "w", action = "Telescope live_grep"},
+                d = { icon = " ", desc = "New File", key = "n", action = "DashboardNewFile"},
+                e = { icon = " ", desc = "Bookmarks", key = "b", action = "Telescope marks"},
+                f = { icon = "󰸧 ", desc = "Load Last Session", key = "s", action = "SessionLoad"},
+                g = { icon = " ", desc = "Update Plugins", key = "u", action = "PackerUpdate"},
+                i = { icon = "󰗼 ", desc = "Exit", key = "q", action = "exit"}
+            },
+            footer = {'type  :help<Enter>  or  <F1>  for on-line help'},
+        }
+    })
  end
 
 --LspSaga
@@ -495,11 +490,11 @@ if (is_module_available('lspconfig')) then
         local mason = require'mason'
         local mason_registry = require'mason-registry'
         local mason_lspconfig = require'mason-lspconfig'
-        
+
         mason_lspconfig.setup {
             automatic_installation = true,
-    	}
-        
+        }
+
         mason.setup({
             ui = {
                 icons = {
@@ -509,13 +504,13 @@ if (is_module_available('lspconfig')) then
                 }
             }
         })
-        
+
         name_mappings = {
             python_lsp_server = 'pylsp',
             lua_language_server = 'lua_ls',
             r_languageserver = 'r_language_server'
         }
-        
+
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
             name = name:gsub("-", "_")
             if name_mappings[name] ~= nil then
