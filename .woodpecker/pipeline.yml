@@ -15,6 +15,7 @@ steps:
     image: alpine/neovim:latest
     commands:
       - export GIT_PATH=$(pwd)
+      - cd ~/
       - tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
     when:
       - event: tag
