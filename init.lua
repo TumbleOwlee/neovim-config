@@ -53,7 +53,7 @@ require('packer').startup(function()
     use 'lukas-reineke/indent-blankline.nvim' -- Add indentation guides even on blank lines
     use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Add git related info in the signs columns and popups
     use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
-    use 'nvim-treesitter/nvim-treesitter-textobjects' -- Additional textobjects for treesitter
+    use { 'nvim-treesitter/nvim-treesitter-textobjects', after = "nvim-treesitter", requires = "nvim-treesitter/nvim-treesitter" }-- Additional textobjects for treesitter
     use 'nvim-lua/lsp_extensions.nvim'
     use 'rcarriga/nvim-notify' -- prettify notifications
     use 'williamboman/mason.nvim' -- auto install of language servers
