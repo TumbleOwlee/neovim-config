@@ -37,9 +37,9 @@ steps:
         from_secret: github_token
       files: neovim-config.tar.gz
       title: 'neovim-config nightly'
-    checksum:
-      - sha256
-      - md5
+      checksum:
+        - sha256
+        - md5
     when:
       - event: tag
         ref: refs/tags/nightly
