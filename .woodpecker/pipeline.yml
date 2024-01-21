@@ -12,8 +12,7 @@ steps:
     when:
       - event: tag
         ref: refs/tags/nightly
-      - branch:
-          exclude: [main]
+      - event: push
   artifact:
     image: alpine/neovim:latest
     commands:
