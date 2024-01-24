@@ -1,6 +1,6 @@
 steps:
   check:
-    image: alpine/neovim:latest
+    image: tumbleowlee/neovim:latest
     commands:
       - mkdir -p ~/.config/nvim
       - cp ./init.lua ~/.config/nvim/init.lua || exit 1
@@ -10,7 +10,7 @@ steps:
     when:
       - event: push
   artifact:
-    image: alpine/neovim:latest
+    image: tumbleowlee/neovim:latest
     commands:
       - mkdir -p ~/.config/nvim
       - cp ./init.lua ~/.config/nvim/init.lua || exit 1
