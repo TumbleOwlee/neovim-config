@@ -59,7 +59,7 @@ require('packer').startup(function()
     use 'williamboman/mason.nvim' -- auto install of language servers
     use 'williamboman/mason-lspconfig.nvim'
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
-    use 'kkharji/lspsaga.nvim' -- lsp extension
+    use { 'nvimdev/lspsaga.nvim', after ='nvim-lspconfig', config = function() require'lspsaga'.setup({}) end, } -- lsp extension
     use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
     use 'hrsh7th/cmp-nvim-lsp'
     use 'hrsh7th/cmp-buffer'
@@ -72,7 +72,7 @@ require('packer').startup(function()
     use 'honza/vim-snippets' -- Code snippets
     use 'jbyuki/instant.nvim' -- Collaborative editing
     use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
-    use { 'kyazdani42/nvim-tree.lua', requires = { 'kyazdani42/nvim-web-devicons' }, tag = 'nightly' }
+    use { 'nvim-tree/nvim-tree.lua', requires = { 'nvim-tree/nvim-web-devicons' } }
     use 'akinsho/bufferline.nvim' -- buffer line
     use 'folke/which-key.nvim' -- show keybindings as list
     use 'folke/twilight.nvim' -- dims inactive potions of code
@@ -160,11 +160,6 @@ if (is_module_available('dashboard')) then
         }
     })
  end
-
---LspSaga
-if (is_module_available('lspsaga')) then
-    require'lspsaga'.init_lsp_saga()
-end
 
 --bufferline.nvim
 if (is_module_available('bufferline')) then
@@ -676,7 +671,7 @@ if (is_module_available('which-key')) then
 
     -- Terminal mode without <leader>
     wk.register({
-        ['<A-d>'] = { [[<C-\><C-n><cmd>lua require'lspsaga.floaterm'.close_float_terminal()<CR>]], 'Close terminal' },
+        ['<A-d>'] = { [[<C-\><C-n><cmd>Lspsaga term_toggle<CR>]], 'Close terminal' },
     }, { mode = 't', prefix = "", noremap =true, silent = true })
 
     -- Normal mode without <leader>
@@ -686,11 +681,11 @@ if (is_module_available('which-key')) then
             ['D'] = { [[<Cmd>lua vim.lsp.buf.declaration()<CR>]], 'Go to declaration' },
             ['d'] = { [[<Cmd>lua vim.lsp.buf.definition()<CR>]], 'Go to definition' },
             ['i'] = { [[<cmd>lua vim.lsp.buf.implementation()<CR>]], 'Go to implementation' },
-            ['h'] = { [[<cmd>lua require'lspsaga.provider'.lsp_finder()<CR>]], 'LSP finder' },
+            ['h'] = { [[<cmd>Lspsaga finder<CR>]], 'LSP finder' },
             ['r'] = { [[<cmd>lua vim.lsp.buf.references()<CR>]], 'Show references' },
         },
-        ['K'] = { [[<cmd>lua require'lspsaga.hover'.render_hover_doc()<CR>]], 'Show documentation' },
-        ['<A-d>'] = { [[<cmd>lua require'lspsaga.floaterm'.open_float_terminal()<CR>]], 'Open terminal' },
+        ['K'] = { [[<cmd>Lspsaga hover_doc<CR>]], 'Show documentation' },
+        ['<A-d>'] = { [[<cmd>Lspsaga term_toggle<CR>]], 'Open terminal' },
         ['<C-n>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
     }, { mode = 'n', prefix = "", noremap = true, silent = true })
     -- Expressions
@@ -703,7 +698,7 @@ if (is_module_available('which-key')) then
     wk.register({
         ['c'] = {
             ['name'] = 'Code actions',
-            ['a'] = { [[<cmd>lua require'lspsaga.codeaction'.code_action()<CR>]], 'Code action' },
+            ['a'] = { [[<cmd>Lspsaga code_action<CR>]], 'Code action' },
         },
         ['s'] = { -- Session
             ['name'] = 'Session handling',
@@ -751,16 +746,19 @@ if (is_module_available('which-key')) then
                 ['l'] = { [[<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>]], 'List folders' },
             },
             ['q'] = { [[<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>]], 'Set loclist' },
-            ['s'] = { [[<cmd>lua require'lspsaga.signaturehelp'.signature_help()<CR>]], 'Signature help' },
+            ['s'] = { [[<cmd>Lspsaga peek_definition<CR>]], 'Peek definition' },
             ['d'] = { [[<cmd>lua require('telescope.builtin').lsp_document_symbols()<CR>]], 'Document symbols' },
-            ['r'] = { [[<cmd>lua require'lspsaga.rename'.rename()<CR>]], 'Rename' },
-            ['p'] = { [[<cmd>lua require'lspsaga.provider'.preview_definition()<CR>]], 'Preview definition' },
-            ['l'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_line_diagnostics()<CR>]], 'Show line diagnostics' },
-            ['c'] = { [[<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>]], 'Show cursor diagnostics' },
+            ['r'] = { [[<cmd>Lspsaga rename<CR>]], 'Rename' },
+            ['p'] = { [[<cmd>Lspsaga peek_definition<CR>]], 'Preview definition' },
             ['j'] = {
                 ['name'] = 'Jump',
-                ['n'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_prev()<CR>]], 'Jump to next' },
-                ['p'] = { [[<cmd>lua require'lspsaga.diagnostic'.lsp_jump_diagnostic_next()<CR>]], 'Jump to previous' },
+                ['n'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to next' },
+                ['p'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to previous' },
+            },
+            ['c'] = {
+                ['name'] = 'Callhierarchy',
+                ['i'] = { [[<cmd>Lspsaga incoming_calls<CR>]], 'Incoming calls' },
+                ['o'] = { [[<cmd>Lspsaga outgoing_calls<CR>]], 'Outgoing calls' },
             },
         },
         ['b'] = {
@@ -800,10 +798,6 @@ if (is_module_available('which-key')) then
 
     -- Visual mode with <leader>
     wk.register({
-        ['c'] = {
-            ['name'] = 'Range code actions',
-            ['a'] = { [[<cmd>lua require'lspsaga.codeaction'.range_code_action()<CR>]], 'Range code action' },
-        },
     }, { mode = 'v', prefix = '<leader>', noremap = true, silent = true })
 
     wk.register({
