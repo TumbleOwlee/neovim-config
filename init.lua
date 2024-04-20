@@ -463,6 +463,13 @@ end
 
 -- LSP settings
 if (is_module_available('lspconfig')) then
+    vim.api.nvim_create_autocmd({"BufWritePost"}, {
+        pattern = {"*.rs"},
+        callback = function()
+            vim.lsp.buf.format({timeout_ms = 3000})
+        end
+    })
+    
     local nvim_lsp = require 'lspconfig'
     local on_attach = function(_, bufnr)
         vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
@@ -512,6 +519,14 @@ if (is_module_available('lspconfig')) then
                 }
             }
         },
+        ['rust-analyzer'] = {
+            checkOnSave = true,
+            check = {
+                enable = true,
+                command = "clippy",
+                features = "all"
+            }
+        }
     }
 
     if (is_module_available('mason')) then
@@ -533,7 +548,7 @@ if (is_module_available('lspconfig')) then
             }
         })
 
-        name_mappings = {
+        local name_mappings = {
             python_lsp_server = 'pylsp',
             lua_language_server = 'lua_ls',
             r_languageserver = 'r_language_server'
