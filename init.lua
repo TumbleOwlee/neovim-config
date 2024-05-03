@@ -82,6 +82,7 @@ require('packer').startup(function()
     use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
     use 'sbdchd/neoformat' -- Extend formatting support
     use { 'windwp/nvim-autopairs' } -- auto closing brackets
+    use { "nvim-telescope/telescope-file-browser.nvim", requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" } } -- file explorer
 end)
 
 --Enable local nvim files
@@ -164,6 +165,12 @@ if (is_module_available('dashboard')) then
         }
     })
  end
+
+-- telescope setup for file explorer
+if (is_module_available('telescope')) then
+    require'telescope'.load_extension 'file_browser'
+end
+
 
 --bufferline.nvim
 if (is_module_available('bufferline')) then
@@ -469,7 +476,7 @@ if (is_module_available('lspconfig')) then
             vim.lsp.buf.format({timeout_ms = 3000})
         end
     })
-    
+
     local nvim_lsp = require 'lspconfig'
     local on_attach = function(_, bufnr)
         vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
@@ -841,6 +848,7 @@ if (is_module_available('which-key')) then
             ['u'] = { [[<cmd>PackerUpdate<CR>]], 'Packer update' },
             ['q'] = { [[<cmd>exit<CR>]], 'Close nvim' },
         },
+        ['f'] = { [[<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>]], 'List buffers'},
         ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
     }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
