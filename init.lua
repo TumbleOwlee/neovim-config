@@ -823,8 +823,7 @@ if (is_module_available('which-key')) then
         },
         ['q'] = {
             ['name'] = 'Quickfix window',
-            ['t'] = { [[<cmd>TroubleToggle<CR>]], 'Toggle quickfix' },
-            ['r'] = { [[<cmd>TroubleRefresh<CR>]], 'Refresh quickfix' },
+            ['t'] = { [[<cmd>Trouble diagnostics toggle<CR>]], 'Toggle quickfix' },
             ['d'] = { [[<cmd>TodoTelescope<CR>]], 'Show ToDo list' },
         },
         ['t'] = {
