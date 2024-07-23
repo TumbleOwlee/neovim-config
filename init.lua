@@ -37,7 +37,6 @@ if (is_module_available('impatient')) then
 end
 
 require('pckr').add {
-    'wbthomason/packer.nvim'; -- Package manager
     { 'snakemake/snakemake', rtp='misc/vim', ft='snakemake' }; -- Snakemake highlighting
     'tpope/vim-fugitive'; -- Git commands in nvim
     'tpope/vim-rhubarb'; -- Fugitive-companion to interact with github
@@ -77,6 +76,7 @@ require('pckr').add {
     'lewis6991/impatient.nvim'; -- speed up plugin loading
     { 'folke/todo-comments.nvim', requires = { 'nvim-lua/plenary.nvim' } }; -- Todo listing
     'mfussenegger/nvim-dap'; -- Debug adapter protocol
+    { "rcarriga/nvim-dap-ui", requires = {"mfussenegger/nvim-dap", "nvim-neotest/nvim-nio"} } -- Neovim DAP UI
     { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } }; -- Neovim DAP
     'sbdchd/neoformat'; -- Extend formatting support
     { 'windwp/nvim-autopairs' }; -- auto closing brackets
@@ -667,19 +667,60 @@ end
 --dap-nvim
 if (is_module_available('dap')) then
     local dap = require('dap')
+  
+    if (is_module_available('dapui')) then
+      require('dapui').setup()
+      
+      local dapui = require("dapui")
+      dap.listeners.before.attach.dapui_config = function()
+        dapui.open()
+      end
+      dap.listeners.before.launch.dapui_config = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated.dapui_config = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited.dapui_config = function()
+        dapui.close()
+      end
+    end
+  
     dap.adapters.lldb = {
       type = 'executable',
-      command = '/usr/bin/lldb-vscode', -- adjust as needed
+      command = '/usr/bin/lldb-vscode',
       name = "lldb"
+    }
+
+    dap.adapters.gdb = {
+      type = 'executable',
+      command = 'gdb',
+      name = "gdb",
+      args = { "-i", "dap" }
     }
 
     dap.configurations.cpp = {
         {
             name = "Launch",
-            type = "lldb",
+            type = "gdb",
             request = "launch",
             program = function()
               return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            end,
+            cwd = '${workspaceFolder}',
+            stopOnEntry = true,
+            args = {},
+            runInTerminal = false,
+        },
+    }
+    dap.configurations.c = dap.configurations.cpp
+    dap.configurations.rust = {
+        {
+            name = "Launch",
+            type = "gdb",
+            request = "launch",
+            program = function()
+              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/target/debug/', 'file')
             end,
             cwd = '${workspaceFolder}',
             stopOnEntry = false,
@@ -687,8 +728,6 @@ if (is_module_available('dap')) then
             runInTerminal = false,
         },
     }
-    dap.configurations.c = dap.configurations.cpp
-    dap.configurations.rust = dap.configurations.cpp
     dap.configurations.lua = {
         {
             type = 'nlua',
