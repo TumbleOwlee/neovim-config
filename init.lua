@@ -1,20 +1,19 @@
--- Install packer
-local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
+local function bootstrap_pckr()
+  local pckr_path = vim.fn.stdpath("data") .. "/pckr/pckr.nvim"
+  if not vim.uv.fs_stat(pckr_path) then
+    vim.fn.system({
+      'git',
+      'clone',
+      "--filter=blob:none",
+      'https://github.com/lewis6991/pckr.nvim',
+      pckr_path
+    })
+  end
 
-if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-    vim.fn.execute('!git clone https://github.com/wbthomason/packer.nvim ' .. install_path)
-    return
+  vim.opt.rtp:prepend(pckr_path)
 end
 
-vim.api.nvim_exec(
-[[
-augroup Packer
-autocmd!
-autocmd BufWritePost init.lua PackerCompile
-augroup end
-]],
-false
-)
+bootstrap_pckr()
 
 --Helper to check if modules is available
 function is_module_available(name)
@@ -37,53 +36,52 @@ if (is_module_available('impatient')) then
     require('impatient')
 end
 
-local use = require('packer').use
-require('packer').startup(function()
-    use 'wbthomason/packer.nvim' -- Package manager
-    use { 'snakemake/snakemake', rtp='misc/vim', ft='snakemake' } -- Snakemake highlighting
-    use 'tpope/vim-fugitive' -- Git commands in nvim
-    use 'tpope/vim-rhubarb' -- Fugitive-companion to interact with github
-    use 'tpope/vim-commentary' -- "gc" to comment visual regions/lines
-    use 'mboughaba/vim-lessmess' -- Remove trailing whitespaces
-    use { 'nvimdev/dashboard-nvim', event = 'VimEnter', dependencies = { {'nvim-tree/nvim-web-devicons'}}} -- Dashboard start page
-    use { 'folke/trouble.nvim', requires = 'kyazdani42/nvim-web-devicons', config = function() require('trouble').setup {} end } -- List of diagnostics
-    use { 'nvim-telescope/telescope.nvim', requires = { { 'nvim-lua/popup.nvim' }, { 'nvim-lua/plenary.nvim' } } } -- UI to select things (files, grep results, open buffers...)
-    use 'joshdick/onedark.vim' -- Theme inspired by Atom
-    use 'itchyny/lightline.vim' -- Fancier statusline
-    use 'lukas-reineke/indent-blankline.nvim' -- Add indentation guides even on blank lines
-    use { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Add git related info in the signs columns and popups
-    use 'nvim-treesitter/nvim-treesitter' -- Highlight, edit, and navigate code using a fast incremental parsing library
-    use { 'nvim-treesitter/nvim-treesitter-textobjects', after = "nvim-treesitter", requires = "nvim-treesitter/nvim-treesitter" }-- Additional textobjects for treesitter
-    use 'nvim-lua/lsp_extensions.nvim'
-    use 'rcarriga/nvim-notify' -- prettify notifications
-    use 'williamboman/mason.nvim' -- auto install of language servers
-    use 'williamboman/mason-lspconfig.nvim'
-    use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
-    use { 'nvimdev/lspsaga.nvim', after ='nvim-lspconfig', config = function() require'lspsaga'.setup({}) end, } -- lsp extension
-    use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
-    use 'hrsh7th/cmp-nvim-lsp'
-    use 'hrsh7th/cmp-buffer'
-    use 'hrsh7th/cmp-path'
-    use 'hrsh7th/cmp-cmdline'
-    use 'hrsh7th/cmp-nvim-lsp-document-symbol'
-    use 'ray-x/lsp_signature.nvim'
-    use { 'L3MON4D3/LuaSnip', after = 'nvim-cmp' } -- Snippets plugin
-    use 'saadparwaiz1/cmp_luasnip'
-    use 'honza/vim-snippets' -- Code snippets
-    use 'jbyuki/instant.nvim' -- Collaborative editing
-    use 'xiyaowong/nvim-cursorword' -- Highlight all word matching word under cursor
-    use { 'nvim-tree/nvim-tree.lua', requires = { 'nvim-tree/nvim-web-devicons' } }
-    use 'akinsho/bufferline.nvim' -- buffer line
-    use 'folke/which-key.nvim' -- show keybindings as list
-    use 'folke/twilight.nvim' -- dims inactive potions of code
-    use 'lewis6991/impatient.nvim' -- speed up plugin loading
-    use { 'folke/todo-comments.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Todo listing
-    use 'mfussenegger/nvim-dap' -- Debug adapter protocol
-    use { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } } -- Neovim DAP
-    use 'sbdchd/neoformat' -- Extend formatting support
-    use { 'windwp/nvim-autopairs' } -- auto closing brackets
-    use { "nvim-telescope/telescope-file-browser.nvim", requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" } } -- file explorer
-end)
+require('pckr').add {
+    'wbthomason/packer.nvim'; -- Package manager
+    { 'snakemake/snakemake', rtp='misc/vim', ft='snakemake' }; -- Snakemake highlighting
+    'tpope/vim-fugitive'; -- Git commands in nvim
+    'tpope/vim-rhubarb'; -- Fugitive-companion to interact with github
+    'tpope/vim-commentary'; -- "gc" to comment visual regions/lines
+    'mboughaba/vim-lessmess'; -- Remove trailing whitespaces
+    { 'nvimdev/dashboard-nvim', event = 'VimEnter', dependencies = { {'nvim-tree/nvim-web-devicons'}}}; -- Dashboard start page
+    { 'folke/trouble.nvim', requires = 'kyazdani42/nvim-web-devicons', config = function() require('trouble').setup {} end }; -- List of diagnostics
+    { 'nvim-telescope/telescope.nvim', requires = { { 'nvim-lua/popup.nvim' }, { 'nvim-lua/plenary.nvim' } } }; -- UI to select things (files, grep results, open buffers...)
+    'joshdick/onedark.vim'; -- Theme inspired by Atom
+    'itchyny/lightline.vim'; -- Fancier statusline
+    'lukas-reineke/indent-blankline.nvim'; -- Add indentation guides even on blank lines
+    { 'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' } }; -- Add git related info in the signs columns and popups
+    'nvim-treesitter/nvim-treesitter'; -- Highlight, edit, and navigate code using a fast incremental parsing library
+    { 'nvim-treesitter/nvim-treesitter-textobjects', after = "nvim-treesitter", requires = "nvim-treesitter/nvim-treesitter" }; -- Additional textobjects for treesitter
+    'nvim-lua/lsp_extensions.nvim';
+    'rcarriga/nvim-notify'; -- prettify notifications
+    'williamboman/mason.nvim'; -- auto install of language servers
+    'williamboman/mason-lspconfig.nvim';
+    'neovim/nvim-lspconfig'; -- Collection of configurations for built-in LSP client
+    { 'nvimdev/lspsaga.nvim', after ='nvim-lspconfig', config = function() require'lspsaga'.setup({}) end, }; -- lsp extension
+    'hrsh7th/nvim-cmp'; -- Autocompletion plugin
+    'hrsh7th/cmp-nvim-lsp';
+    'hrsh7th/cmp-buffer';
+    'hrsh7th/cmp-path';
+    'hrsh7th/cmp-cmdline';
+    'hrsh7th/cmp-nvim-lsp-document-symbol';
+    'ray-x/lsp_signature.nvim';
+    { 'L3MON4D3/LuaSnip', after = 'nvim-cmp' }; -- Snippets plugin
+    'saadparwaiz1/cmp_luasnip';
+    'honza/vim-snippets'; -- Code snippets
+    'jbyuki/instant.nvim'; -- Collaborative editing
+    'xiyaowong/nvim-cursorword'; -- Highlight all word matching word under cursor
+    { 'nvim-tree/nvim-tree.lua', requires = { 'nvim-tree/nvim-web-devicons' } };
+    'akinsho/bufferline.nvim'; -- buffer line
+    'folke/which-key.nvim'; -- show keybindings as list
+    'folke/twilight.nvim'; -- dims inactive potions of code
+    'lewis6991/impatient.nvim'; -- speed up plugin loading
+    { 'folke/todo-comments.nvim', requires = { 'nvim-lua/plenary.nvim' } }; -- Todo listing
+    'mfussenegger/nvim-dap'; -- Debug adapter protocol
+    { 'jbyuki/one-small-step-for-vimkind', requires = { 'mfussenegger/nvim-dap' } }; -- Neovim DAP
+    'sbdchd/neoformat'; -- Extend formatting support
+    { 'windwp/nvim-autopairs' }; -- auto closing brackets
+    { "nvim-telescope/telescope-file-browser.nvim", requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" } }; -- file explorer
+}
 
 --Enable local nvim files
 vim.o.exrc = true
@@ -287,11 +285,12 @@ vim.api.nvim_create_autocmd({"BufRead"}, {
 if (is_module_available('gitsigns')) then
     require('gitsigns').setup {
         signs = {
-            add = { hl = 'GitGutterAdd', text = '+' },
-            change = { hl = 'GitGutterChange', text = '~' },
-            delete = { hl = 'GitGutterDelete', text = '_' },
-            topdelete = { hl = 'GitGutterDelete', text = '‾' },
-            changedelete = { hl = 'GitGutterChange', text = '~' },
+            add = { text = '+' },
+            change = { text = '~' },
+            delete = { text = '_' },
+            topdelete = { text = '‾' },
+            changedelete = { text = '~' },
+            untracked = { text = '|' },
         },
     }
 end
