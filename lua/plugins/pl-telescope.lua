@@ -17,8 +17,8 @@ require'loader'.load_plugin({
                 },
             },
         }
+        require'telescope'.load_extension 'file_browser'
     end
 })
 
 -- telescope setup for file explorer
-require'telescope'.load_extension 'file_browser'
