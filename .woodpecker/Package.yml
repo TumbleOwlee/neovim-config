@@ -4,7 +4,7 @@ steps:
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - nvim --headless +'Pckr install' +qall
+      - nvim +'Pckr install' +qall
     when:
       - event: push
   artifact:
@@ -12,7 +12,7 @@ steps:
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - nvim --headless +'Pckr install' +qall
+      - nvim +'Pckr install' +qall
       - export GIT_PATH=$(pwd)
       - cd ~/
       - tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
