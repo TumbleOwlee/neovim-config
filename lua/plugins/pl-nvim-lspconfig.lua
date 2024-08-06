@@ -33,52 +33,6 @@ require'loader'.load_plugin({
         capabilities.textDocument.completion.completionItem.snippetSupport = true
         capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-        -- Lua LSP
-        local settings = {
-            Lua = {
-                runtime = {
-                    version = 'LuaJIT',
-                    path = {
-                        '?.lua',
-                        '?/init.lua',
-                        vim.fn.expand'~/.luarocks/share/lua/5.3/?.lua',
-                        vim.fn.expand'~/.luarocks/share/lua/5.3/?/init.lua',
-                        '/usr/share/5.3/?.lua',
-                        '/usr/share/lua/5.3/?/init.lua'
-                    }
-                },
-                diagnostics = {
-                    globals = {'vim'},
-                },
-                workspace = {
-                    library = {
-                        vim.api.nvim_get_runtime_file("", true),
-                        vim.fn.expand'~/.luarocks/share/lua/5.3',
-                        '/usr/share/lua/5.3'
-                    }
-                },
-                telemetry = {
-                    enable = false,
-                },
-            },
-            pylsp = {
-                plugins = {
-                    pycodestyle = {
-                        ignore = {'w391', 'E501'},
-                        maxLineLength = 120,
-                    }
-                }
-            },
-            ['rust-analyzer'] = {
-                checkOnSave = true,
-                check = {
-                    enable = true,
-                    command = "clippy",
-                    features = "all"
-                }
-            }
-        }
-
         local mason = require'mason'
         local mason_registry = require'mason-registry'
         local mason_lspconfig = require'mason-lspconfig'
@@ -97,24 +51,88 @@ require'loader'.load_plugin({
             }
         })
 
-        local name_mappings = {
-            python_lsp_server = 'pylsp',
-            lua_language_server = 'lua_ls',
-            r_languageserver = 'r_language_server'
+        local configure = function(name)
+            return {
+                cmd = nvim_lsp[name].cmd,
+                on_attach = on_attach,
+                capabilities = capabilities,
+            }
+        end
+
+        local configs = {
+            -- Default config
+            function(name)
+                return name, configure(name)
+            end,
+            -- Specific setups
+            ['lua_language_server'] = function()
+                return 'lua_ls', vim.tbl_deep_extend('force', configure('lua_ls'), {
+                    settings = {
+                        Lua = {
+                            runtime = {
+                                version = 'LuaJIT',
+                                path = {
+                                    '?.lua',
+                                    '?/init.lua',
+                                    vim.fn.expand'~/.luarocks/share/lua/5.3/?.lua',
+                                    vim.fn.expand'~/.luarocks/share/lua/5.3/?/init.lua',
+                                    '/usr/share/5.3/?.lua',
+                                    '/usr/share/lua/5.3/?/init.lua'
+                                }
+                            },
+                            diagnostics = {
+                                globals = {'vim'},
+                            },
+                            workspace = {
+                                library = {
+                                    vim.api.nvim_get_runtime_file("", true),
+                                    vim.fn.expand'~/.luarocks/share/lua/5.3',
+                                    '/usr/share/lua/5.3'
+                                }
+                            },
+                            telemetry = {
+                                enable = false,
+                            },
+                        }
+                    }
+                })
+            end,
+            ['r_languageserver'] = function()
+                return 'r_language_server', vim.tbl_deep_extend('force', configure('r_language_server'), {
+                    settings = {
+                        pylsp = {
+                            plugins = {
+                                pycodestyle = {
+                                    ignore = {'w391', 'E501'},
+                                    maxLineLength = 120,
+                                }
+                            }
+                        },
+                    }
+                })
+            end,
+            ['python_lsp_server'] = function()
+                return 'pylsp', configure('pylsp')
+            end,
+            ['rust_analyzer'] = function()
+                return 'rust_analyzer', vim.tbl_deep_extend('force', configure('rust_analyzer'), {
+                    settings = {
+                        ['rust-analyzer'] = {
+                            checkOnSave = true,
+                            check = {
+                                enable = true,
+                                command = "clippy",
+                                features = "all"
+                            }
+                        }
+                    }
+                })
+            end
         }
 
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
-            name = name:gsub("-", "_")
-            if name_mappings[name] ~= nil then
-                name = name_mappings[name]
-            end
-            local cmd = nvim_lsp[name].cmd
-            nvim_lsp[name].setup {
-                cmd = cmd,
-                on_attach = on_attach,
-                capabilities = capabilities,
-                settings = settings,
-            }
+            local n, cfg = (configs[name:gsub('-', '_')] or configs[1])(name:gsub('-', '_'))
+            nvim_lsp[n].setup(cfg)
         end
     end
 })
