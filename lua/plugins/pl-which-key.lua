@@ -21,7 +21,9 @@ require'loader'.load_plugin({
             },
             ['K'] = { [[<cmd>Lspsaga hover_doc<CR>]], 'Show documentation' },
             ['<A-d>'] = { [[<cmd>Lspsaga term_toggle<CR>]], 'Open terminal' },
-            ['<C-n>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
+            ['<C-d>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
+            ['<C-p>'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to previous' },
+            ['<C-n>'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to next' },
         }, { mode = 'n', prefix = "", noremap = true, silent = true })
         -- Expressions
         wk.register({
@@ -87,8 +89,8 @@ require'loader'.load_plugin({
                 ['p'] = { [[<cmd>Lspsaga peek_definition<CR>]], 'Preview definition' },
                 ['j'] = {
                     ['name'] = 'Jump',
-                    ['n'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to next' },
-                    ['p'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to previous' },
+                    ['n'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to next' },
+                    ['p'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to previous' },
                 },
                 ['c'] = {
                     ['name'] = 'Callhierarchy',
