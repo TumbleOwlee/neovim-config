@@ -1,5 +1,5 @@
 -- Highlight, edit, and navigate code using a fast incremental parsing library
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'nvim-treesitter/nvim-treesitter',
     config = function()
         require('nvim-treesitter.configs').setup {
@@ -56,7 +56,7 @@ require'loader'.load_plugin({
 })
 
 -- Additional textobjects for treesitter
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'nvim-treesitter/nvim-treesitter-textobjects',
     after = "nvim-treesitter",
     requires = "nvim-treesitter/nvim-treesitter"

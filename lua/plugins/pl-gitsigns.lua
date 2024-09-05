@@ -1,5 +1,5 @@
 -- Add git related info in the signs columns and popups
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'lewis6991/gitsigns.nvim',
     requires = {
         'nvim-lua/plenary.nvim'

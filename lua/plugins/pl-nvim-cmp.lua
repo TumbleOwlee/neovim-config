@@ -1,26 +1,26 @@
 -- Autocompletion plugin
-require'loader'.load_plugin('hrsh7th/cmp-nvim-lsp')
-require'loader'.load_plugin('hrsh7th/cmp-buffer')
-require'loader'.load_plugin('hrsh7th/cmp-path')
-require'loader'.load_plugin('hrsh7th/cmp-cmdline')
-require'loader'.load_plugin('hrsh7th/cmp-nvim-lsp-document-symbol')
-require'loader'.load_plugin({
+require 'loader'.load_plugin('hrsh7th/cmp-nvim-lsp')
+require 'loader'.load_plugin('hrsh7th/cmp-buffer')
+require 'loader'.load_plugin('hrsh7th/cmp-path')
+require 'loader'.load_plugin('hrsh7th/cmp-cmdline')
+require 'loader'.load_plugin('hrsh7th/cmp-nvim-lsp-document-symbol')
+require 'loader'.load_plugin({
     'hrsh7th/nvim-cmp',
     after = 'nvim-autopairs',
     requires = 'windwp/nvim-autopairs',
     config = function()
         require 'plugins.pl-luasnip'
         local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-        local cmp = require'cmp'
+        local cmp = require 'cmp'
         cmp.setup({
             snippet = {
                 expand = function(args)
-                    local luasnip = require'luasnip'
+                    local luasnip = require 'luasnip'
                     if not luasnip then
                         return
                     end
                     luasnip.lsp_expand(args.body)
-                  end,
+                end,
             },
             mapping = {
                 ['<Down>'] = cmp.config.disable,
@@ -42,7 +42,7 @@ require'loader'.load_plugin({
                 { name = 'buffer' },
             })
         })
-         -- Set configuration for specific filetype.
+        -- Set configuration for specific filetype.
         cmp.setup.filetype('gitcommit', {
             sources = cmp.config.sources({
                 { name = 'cmp_git' },
@@ -73,8 +73,8 @@ require'loader'.load_plugin({
             local line, col = unpack(vim.api.nvim_win_get_cursor(0))
             return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
         end
-        local luasnip = require'luasnip'
-        local types = require'cmp.types'
+        local luasnip = require 'luasnip'
+        local types = require 'cmp.types'
         _G.vimrc.cmp.cb_tab = function()
             if not _G.vimrc.cmp.has_words_before() then
                 vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, true, true), 'n', true)

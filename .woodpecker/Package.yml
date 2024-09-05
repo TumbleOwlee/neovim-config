@@ -1,14 +1,18 @@
 steps:
   check:
     image: tumbleowlee/neovim:latest
+
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
       - nvim +'Pckr install' +qall || exit 1
+
     when:
       - event: push
+
   artifact:
     image: tumbleowlee/neovim:latest
+
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
@@ -16,11 +20,14 @@ steps:
       - export GIT_PATH=$(pwd)
       - cd ~/
       - tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
+
     when:
       - event: tag
         ref: refs/tags/nightly
+
   upload:
     image: woodpeckerci/plugin-github-release:latest
+
     settings:
       api_key:
         from_secret: github_token
@@ -29,6 +36,7 @@ steps:
       checksum:
         - sha256
         - md5
+
     when:
       - event: tag
         ref: refs/tags/nightly

@@ -1,5 +1,5 @@
 -- Keybindings with interactive popup for reminder
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'folke/which-key.nvim',
     config = function()
         local wk = require('which-key')
@@ -7,7 +7,7 @@ require'loader'.load_plugin({
         -- Terminal mode without <leader>
         wk.register({
             ['<A-d>'] = { [[<C-\><C-n><cmd>Lspsaga term_toggle<CR>]], 'Close terminal' },
-        }, { mode = 't', prefix = "", noremap =true, silent = true })
+        }, { mode = 't', prefix = "", noremap = true, silent = true })
 
         -- Normal mode without <leader>
         wk.register({
@@ -24,6 +24,8 @@ require'loader'.load_plugin({
             ['<C-d>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
             ['<C-p>'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to previous' },
             ['<C-n>'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to next' },
+            ['<C-a>'] = { [[<cmd>Lspsaga code_action<CR>]], 'Code action' },
+            ['<C-f>'] = { [[<cmd>lua vim.lsp.buf.format()<CR>]], 'Format current buffer' },
         }, { mode = 'n', prefix = "", noremap = true, silent = true })
         -- Expressions
         wk.register({
@@ -113,7 +115,7 @@ require'loader'.load_plugin({
                 ['f'] = {
                     ['name'] = 'Find',
                     ['f'] = { [[<cmd>lua require('telescope.builtin').find_files({previewer = false})<CR>]], 'Find files' },
-                    ['z'] ={ [[<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<CR>]], 'Fuzzy find' },
+                    ['z'] = { [[<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<CR>]], 'Fuzzy find' },
                 },
                 ['m'] = { [[<cmd>lua require('telescope.builtin').marks()<CR>]], 'Help tags' },
                 ['h'] = { [[<cmd>lua require('telescope.builtin').help_tags()<CR>]], 'Help tags' },
@@ -129,8 +131,8 @@ require'loader'.load_plugin({
                 ['u'] = { [[<cmd>PackerUpdate<CR>]], 'Packer update' },
                 ['q'] = { [[<cmd>exit<CR>]], 'Close nvim' },
             },
-            ['f'] = { [[<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>]], 'List buffers'},
-            ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers'},
+            ['f'] = { [[<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>]], 'List buffers' },
+            ['<Space>'] = { [[<cmd>lua require('telescope.builtin').buffers()<CR>]], 'List buffers' },
         }, { mode = 'n', prefix = '<leader>', noremap = true, silent = true })
 
         -- Visual mode with <leader>
@@ -144,6 +146,6 @@ require'loader'.load_plugin({
             ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], 'Expand snippet' },
             ['<C-n>'] = { [[<cmd>lua if require'luasnip'.jumpable(1) then require'luasnip'.jump(1) end<CR>]], 'Jump to next position' },
             ['<C-p>'] = { [[<cmd>lua if require'luasnip'.jumpable(-1) then require'luasnip'.jump(-1) end<CR>]], 'Jump to next position' },
-        }, { mode = 'i', prefix = '', noremap = true, silent = true})
+        }, { mode = 'i', prefix = '', noremap = true, silent = true })
     end
 })

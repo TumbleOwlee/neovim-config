@@ -1,5 +1,5 @@
 -- Collection of configurations for built-in LSP client
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'neovim/nvim-lspconfig',
     after = {
         { 'cmp_nvim_lsp' },
@@ -15,10 +15,10 @@ require'loader'.load_plugin({
         { 'williamboman/mason-lspconfig.nvim' },
     },
     config = function()
-        vim.api.nvim_create_autocmd({"BufWritePost"}, {
-            pattern = {"*.rs"},
+        vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+            pattern = { "*.rs" },
             callback = function()
-                vim.lsp.buf.format({timeout_ms = 3000})
+                vim.lsp.buf.format({ timeout_ms = 3000 })
             end
         })
 
@@ -26,16 +26,16 @@ require'loader'.load_plugin({
         local on_attach = function(_, bufnr)
             vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
             vim.cmd [[ command! Format execute 'lua vim.lsp.buf.formatting()' ]]
-            require'lsp_signature'.on_attach()
+            require 'lsp_signature'.on_attach()
         end
 
         local capabilities = vim.lsp.protocol.make_client_capabilities()
         capabilities.textDocument.completion.completionItem.snippetSupport = true
         capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-        local mason = require'mason'
-        local mason_registry = require'mason-registry'
-        local mason_lspconfig = require'mason-lspconfig'
+        local mason = require 'mason'
+        local mason_registry = require 'mason-registry'
+        local mason_lspconfig = require 'mason-lspconfig'
 
         mason_lspconfig.setup {
             automatic_installation = true,
@@ -74,19 +74,19 @@ require'loader'.load_plugin({
                                 path = {
                                     '?.lua',
                                     '?/init.lua',
-                                    vim.fn.expand'~/.luarocks/share/lua/5.3/?.lua',
-                                    vim.fn.expand'~/.luarocks/share/lua/5.3/?/init.lua',
+                                    vim.fn.expand '~/.luarocks/share/lua/5.3/?.lua',
+                                    vim.fn.expand '~/.luarocks/share/lua/5.3/?/init.lua',
                                     '/usr/share/5.3/?.lua',
                                     '/usr/share/lua/5.3/?/init.lua'
                                 }
                             },
                             diagnostics = {
-                                globals = {'vim'},
+                                globals = { 'vim' },
                             },
                             workspace = {
                                 library = {
                                     vim.api.nvim_get_runtime_file("", true),
-                                    vim.fn.expand'~/.luarocks/share/lua/5.3',
+                                    vim.fn.expand '~/.luarocks/share/lua/5.3',
                                     '/usr/share/lua/5.3'
                                 }
                             },
@@ -103,7 +103,7 @@ require'loader'.load_plugin({
                         pylsp = {
                             plugins = {
                                 pycodestyle = {
-                                    ignore = {'w391', 'E501'},
+                                    ignore = { 'w391', 'E501' },
                                     maxLineLength = 120,
                                 }
                             }
@@ -113,6 +113,20 @@ require'loader'.load_plugin({
             end,
             ['python_lsp_server'] = function()
                 return 'pylsp', configure('pylsp')
+            end,
+            ['yaml_language_server'] = function()
+                return 'yamlls', vim.tbl_deep_extend('force', configure('yamlls'), {
+                    settings = {
+                        yaml = {
+                            format = {
+                                enable = true,
+                                singleQuote = true,
+                            },
+                            validate = true,
+                            completion = true,
+                        }
+                    }
+                })
             end,
             ['rust_analyzer'] = function()
                 return 'rust_analyzer', vim.tbl_deep_extend('force', configure('rust_analyzer'), {
@@ -134,5 +148,13 @@ require'loader'.load_plugin({
             local n, cfg = (configs[name:gsub('-', '_')] or configs[1])(name:gsub('-', '_'))
             nvim_lsp[n].setup(cfg)
         end
+    end
+})
+
+-- Apply format on write
+vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+    pattern = { "*" },
+    callback = function()
+        vim.lsp.buf.format()
     end
 })

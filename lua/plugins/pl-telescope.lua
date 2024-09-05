@@ -1,5 +1,5 @@
 -- UI to select things (files, grep results, open buffers...)
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'nvim-telescope/telescope.nvim',
     requires = {
         { 'nvim-lua/popup.nvim' },
@@ -17,7 +17,7 @@ require'loader'.load_plugin({
                 },
             },
         }
-        require'telescope'.load_extension 'file_browser'
+        require 'telescope'.load_extension 'file_browser'
     end
 })
 

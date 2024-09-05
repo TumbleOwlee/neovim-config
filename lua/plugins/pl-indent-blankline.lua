@@ -1,5 +1,5 @@
 -- Add indentation guides even on blank lines
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'lukas-reineke/indent-blankline.nvim',
     config = function()
         vim.opt.list = true
@@ -15,7 +15,7 @@ require'loader'.load_plugin({
             exclude = {
                 filetypes = { 'help', 'packer', 'dashboard' },
             },
-        --    buftype_exclude = { 'terminal', 'nofile' },
+            --    buftype_exclude = { 'terminal', 'nofile' },
             whitespace = {
                 highlight = highlight,
                 remove_blankline_trail = true,

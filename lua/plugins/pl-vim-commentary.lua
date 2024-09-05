@@ -1,1 +1,1 @@
-require'loader'.load_plugin('tpope/vim-commentary')
+require 'loader'.load_plugin('tpope/vim-commentary')

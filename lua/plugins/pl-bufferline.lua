@@ -1,8 +1,8 @@
 -- Buffer line
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'akinsho/bufferline.nvim',
     config = function()
-        require'bufferline'.setup({
+        require 'bufferline'.setup({
             options = {
                 diagnostics = 'nvim_lsp'
             }

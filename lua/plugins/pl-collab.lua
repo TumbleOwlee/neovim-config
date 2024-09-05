@@ -1,11 +1,11 @@
 -- Collaborative edition
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'jbyuki/instant.nvim',
     config = function()
         local function new_hi_group(name, fg, bg)
             local use_bg = bg or '0'
             local use_fg = fg or '0'
-            vim.cmd("highlight " .. name .. " guifg=" .. use_fg .. " guibg=".. use_bg)
+            vim.cmd("highlight " .. name .. " guifg=" .. use_fg .. " guibg=" .. use_bg)
             return name
         end
 

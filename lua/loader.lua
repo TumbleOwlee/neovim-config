@@ -1,17 +1,17 @@
 -- Install pckr if missing
 local function bootstrap_pckr()
-  local pckr_path = vim.fn.stdpath("data") .. "/pckr/pckr.nvim"
-  if not vim.uv.fs_stat(pckr_path) then
-    vim.fn.system({
-      'git',
-      'clone',
-      "--filter=blob:none",
-      'https://github.com/lewis6991/pckr.nvim',
-      pckr_path
-    })
-  end
+    local pckr_path = vim.fn.stdpath("data") .. "/pckr/pckr.nvim"
+    if not vim.uv.fs_stat(pckr_path) then
+        vim.fn.system({
+            'git',
+            'clone',
+            "--filter=blob:none",
+            'https://github.com/lewis6991/pckr.nvim',
+            pckr_path
+        })
+    end
 
-  vim.opt.rtp:prepend(pckr_path)
+    vim.opt.rtp:prepend(pckr_path)
 end
 
 local function init()
@@ -22,7 +22,7 @@ local function init()
 end
 
 local function load_plugin(plugin)
-    require'pckr'.add { plugin }
+    require 'pckr'.add { plugin }
 end
 
 -- Check if specific plugin is loaded

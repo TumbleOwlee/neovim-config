@@ -46,15 +46,12 @@ vim.o.cursorline = true
 vim.cmd("highlight Normal guibg=none")
 
 -- Highlight on yank
-vim.api.nvim_exec(
-[[
-augroup YankHighlight
-autocmd!
-autocmd TextYankPost * silent! lua vim.highlight.on_yank()
-augroup end
-]],
-false
-)
+vim.api.nvim_create_autocmd({ "TextYankPost" }, {
+    pattern = { "*" },
+    callback = function()
+        vim.highlight.on_yank()
+    end
+})
 
 -- Y yank until the end of line
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })

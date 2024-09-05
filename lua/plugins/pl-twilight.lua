@@ -1,8 +1,8 @@
 -- Dims inactive potions of code
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'folke/twilight.nvim',
     config = function()
-        require'twilight'.setup {
+        require 'twilight'.setup {
             dimming = {
                 alpha = 0.5,
             },

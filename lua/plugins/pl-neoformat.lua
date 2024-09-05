@@ -1,2 +1,2 @@
 -- Extend formatting support
-require'loader'.load_plugin('sbdchd/neoformat')
+require 'loader'.load_plugin('sbdchd/neoformat')

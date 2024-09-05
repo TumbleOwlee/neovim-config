@@ -1,7 +1,7 @@
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'nvim-lua/lsp_extensions.nvim',
     config = function()
-        require'lsp_extensions'.inlay_hints{
+        require 'lsp_extensions'.inlay_hints {
             highlight = "Comment",
             prefix = " > ",
             aligned = false,
@@ -10,4 +10,3 @@ require'loader'.load_plugin({
         }
     end
 })
-

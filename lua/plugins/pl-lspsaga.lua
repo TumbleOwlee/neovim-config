@@ -1,8 +1,8 @@
 -- LSP extension
-require'loader'.load_plugin({
+require 'loader'.load_plugin({
     'nvimdev/lspsaga.nvim',
-    after ='nvim-lspconfig',
+    after = 'nvim-lspconfig',
     config = function()
-        require'lspsaga'.setup({})
+        require 'lspsaga'.setup({})
     end,
 })
