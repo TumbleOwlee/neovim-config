@@ -128,6 +128,12 @@ require 'loader'.load_plugin({
                     }
                 })
             end,
+            ['json_lsp'] = function()
+                return 'jsonls', configure('jsonls')
+            end,
+            ['bash_language_server'] = function()
+                return 'bashls', configure('bashls')
+            end,
             ['rust_analyzer'] = function()
                 return 'rust_analyzer', vim.tbl_deep_extend('force', configure('rust_analyzer'), {
                     settings = {
