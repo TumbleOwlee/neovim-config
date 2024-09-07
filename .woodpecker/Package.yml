@@ -9,6 +9,7 @@ steps:
 
     when:
       - event: push
+      - event: manual
 
   artifact:
     image: tumbleowlee/neovim:latest
