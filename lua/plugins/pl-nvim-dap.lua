@@ -2,10 +2,23 @@
 require 'loader'.load_plugin({
     'mfussenegger/nvim-dap',
     config = function()
+        function find_executable(name, dir)
+            local d = dir or "/usr/bin/"
+            local pfile = io.popen('ls -a "' .. d .. '"')
+            for n in pfile:lines() do
+                if string.find(n, name, 0, true) then
+                    pfile:close()
+                    return d .. n
+                end
+            end
+            pfile:close()
+            return d .. name
+        end
+
         local dap = require('dap')
         dap.adapters.lldb = {
             type = 'executable',
-            command = '/usr/bin/lldb-vscode', -- adjust as needed
+            command = find_executable('lldb-dap'), -- adjust as needed
             name = "lldb"
         }
 
@@ -21,7 +34,7 @@ require 'loader'.load_plugin({
                 stopOnEntry = false,
                 args = {},
                 runInTerminal = false,
-            },
+            }
         }
         dap.configurations.c = dap.configurations.cpp
         dap.configurations.rust = dap.configurations.cpp

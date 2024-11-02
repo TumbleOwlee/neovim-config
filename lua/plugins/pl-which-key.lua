@@ -70,11 +70,11 @@ require 'loader'.load_plugin({
                     ['u'] = { [[<cmd>lua require'dap'.up()<CR>]], 'Go up in stacktrace' },
                     ['d'] = { [[<cmd>lua require'dap'.down()<CR>]], 'Go down in stacktrace' },
                     ['f'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames)<CR>]], 'Show frames' },
-                    ['s'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames)<CR>]], 'Show scopes' },
+                    ['s'] = { [[<cmd>lua require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.scopes)<CR>]], 'Show scopes' },
                 },
                 ['p'] = { [[<cmd>lua require'dap'.pause()<CR>]], 'Pause thread' },
                 ['f'] = { [[<cmd>lua require'dap'.repl.toggle()<CR>]], 'Toggle interactive REPL console' },
-                ['v'] = { [[<cmd>lua require'dap.ui.widgets').hover()<CR>]], 'Show value of expr under cursor' },
+                ['v'] = { [[<cmd>lua require'dap.ui.widgets'.hover()<CR>]], 'Show value of expr under cursor' },
             },
             ['l'] = {
                 ['name'] = 'LSP operations',
