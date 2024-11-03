@@ -28,7 +28,12 @@ require 'loader'.load_plugin({
                 type = "lldb",
                 request = "launch",
                 program = function()
-                    return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+                    if vim.g.dap_target then
+                        return vim.fn.input('Path to executable: ', vim.g.dap_target, 'file')
+                    else
+                        vim.g.dap_target = vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+                        return vim.g.dap_target
+                    end
                 end,
                 cwd = '${workspaceFolder}',
                 stopOnEntry = false,
