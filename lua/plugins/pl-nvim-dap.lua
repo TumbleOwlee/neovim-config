@@ -12,13 +12,13 @@ require 'loader'.load_plugin({
                 end
             end
             pfile:close()
-            return d .. name
+            return nil
         end
 
         local dap = require('dap')
         dap.adapters.lldb = {
             type = 'executable',
-            command = find_executable('lldb-dap'), -- adjust as needed
+            command = find_executable('lldb-dap') or find_executable('lldb-vscode') or 'lldb-vscode',
             name = "lldb"
         }
 
