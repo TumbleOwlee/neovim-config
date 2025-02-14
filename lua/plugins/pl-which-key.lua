@@ -21,6 +21,7 @@ require 'loader'.load_plugin({
             },
             ['K'] = { [[<cmd>Lspsaga hover_doc<CR>]], 'Show documentation' },
             ['<A-d>'] = { [[<cmd>Lspsaga term_toggle<CR>]], 'Open terminal' },
+            ['<A-w>'] = { [[<cmd>lua require('telescope.builtin').lsp_document_symbols({ symbols='function' })<CR>]], 'Show functions' },
             ['<C-d>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
             ['<C-p>'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to previous' },
             ['<C-n>'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to next' },
