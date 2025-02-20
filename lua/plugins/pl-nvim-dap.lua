@@ -2,16 +2,18 @@
 require 'loader'.load_plugin({
     'mfussenegger/nvim-dap',
     config = function()
-        function find_executable(name, dir)
+        local function find_executable(name, dir)
             local d = dir or "/usr/bin/"
             local pfile = io.popen('ls -a "' .. d .. '"')
-            for n in pfile:lines() do
-                if string.find(n, name, 0, true) then
-                    pfile:close()
-                    return d .. n
+            if pfile then
+                for n in pfile:lines() do
+                    if string.find(n, name, 0, true) then
+                        pfile:close()
+                        return d .. n
+                    end
                 end
+                pfile:close()
             end
-            pfile:close()
             return nil
         end
 

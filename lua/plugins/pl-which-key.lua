@@ -35,6 +35,7 @@ require 'loader'.load_plugin({
             ['<A-f>'] = { [[<cmd>lua if vim.g.dap_float then vim.g.dap_float.close() vim.g.dap_float = nil end if require'dap'.status() and require'dap'.status() ~= "" then vim.g.dap_float = require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.frames) end<CR>]], 'Show debug frames' },
             ['<A-l>'] = { [[<cmd>lua if vim.g.dap_float then vim.g.dap_float.close() vim.g.dap_float = nil end if require'dap'.status() and require'dap'.status() ~= "" then vim.g.dap_float = require'dap.ui.widgets'.centered_float(require'dap.ui.widgets'.scopes) end<CR>]], 'Show debug locals' },
             ['<A-p>'] = { [[<cmd>lua require'dap'.repl.toggle()<CR>]], 'Show console' },
+            ['<A-m>'] = { [[<cmd>w<CR><cmd>bn<CR>]], 'Next buffer' },
         }, { mode = 'n', prefix = "", noremap = true, silent = true })
         -- Expressions
         wk.register({
