@@ -5,7 +5,7 @@ steps:
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - nvim +'Pckr install' +qall || exit 1
+      - nvim +qall || exit 1
 
     when:
       - event: push
@@ -17,7 +17,7 @@ steps:
     commands:
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - nvim +'Pckr install' +qall || exit 1
+      - nvim +qall || exit 1
       - export GIT_PATH=$(pwd)
       - cd ~/
       - tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
