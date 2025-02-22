@@ -1,7 +1,8 @@
 -- Install pckr if missing
 local function bootstrap_pckr()
     local pckr_path = vim.fn.stdpath("data") .. "/pckr/pckr.nvim"
-    if not vim.uv.fs_stat(pckr_path) then
+    local uv = vim.uv or vim.loop
+    if not uv.fs_stat(pckr_path) then
         vim.fn.system({
             'git',
             'clone',
