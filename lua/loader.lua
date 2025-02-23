@@ -33,6 +33,8 @@ local function install_plugin(plugin)
         vim.fn.system({
             'git',
             'clone',
+            '--depth',
+            '1',
             'https://github.com/' .. (type(plugin) == "table" and plugin[1] or plugin),
             opt
         })
