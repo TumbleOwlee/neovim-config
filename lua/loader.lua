@@ -22,7 +22,50 @@ local function init()
     bootstrap_pckr()
 end
 
+local registered_plugins = {}
+
+local function install_plugin(plugin)
+    local dir = vim.split(type(plugin) == "table" and plugin[1] or plugin, '/')[2]
+    local opt = vim.fn.stdpath("data") .. "/site/pack/pckr/opt/".. dir
+    local uv = vim.uv or vim.loop
+    -- Check out plugin if not present
+    if not uv.fs_stat(opt) then
+        vim.fn.system({
+            'git',
+            'clone',
+            'https://github.com/' .. (type(plugin) == "table" and plugin[1] or plugin),
+            opt
+        })
+    end
+    -- Install dependencies and requirements
+    for _, n in pairs{'dependencies', 'requires'} do
+        if plugin[n] then
+            if type(plugin[n]) == "table" then
+                for k, v in pairs(plugin[n]) do
+                    install_plugin(v)
+                end
+            else
+                install_plugin(plugin[n])
+            end
+        end
+    end
+end
+
+-- Create user command for synchronous install (blocking)
+vim.api.nvim_create_user_command(
+    "SyncInstall",
+    function()
+        for _, plugin in pairs(registered_plugins) do
+            install_plugin(plugin)
+        end
+    end,
+    { desc = "Install all plugins synchronously!" }
+)
+
 local function load_plugin(plugin)
+    -- Store plugin info
+    table.insert(registered_plugins, plugin)
+    -- Initialize plugin using pckr
     require 'pckr'.add { plugin }
 end
 
