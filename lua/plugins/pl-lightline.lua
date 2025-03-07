@@ -4,7 +4,7 @@ require 'loader'.load_plugin({
     config = function()
         --Set statusbar
         vim.g.lightline = {
-            colorscheme = 'onedark',
+            --colorscheme = 'kanagawa',
             active = { left = { { 'mode', 'paste' }, { 'gitbranch', 'readonly', 'filename', 'modified' } } },
             component_function = { gitbranch = 'FugitiveHead' },
         }

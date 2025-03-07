@@ -36,3 +36,4 @@ require 'plugins.pl-which-key'
 
 -- General settings
 require 'settings'
+require 'search'
