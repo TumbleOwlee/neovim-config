@@ -33,6 +33,7 @@ require 'plugins.pl-vim-fugitive'
 require 'plugins.pl-vim-lessmess'
 require 'plugins.pl-vim-rhubarb'
 require 'plugins.pl-which-key'
+require 'plugins.pl-neogen'
 
 -- General settings
 require 'settings'

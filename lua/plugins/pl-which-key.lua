@@ -22,11 +22,12 @@ require 'loader'.load_plugin({
             ['K'] = { [[<cmd>Lspsaga hover_doc<CR>]], 'Show documentation' },
             ['<A-d>'] = { [[<cmd>Lspsaga term_toggle<CR>]], 'Open terminal' },
             ['<A-w>'] = { [[<cmd>lua require('telescope.builtin').lsp_document_symbols({ symbols='function' })<CR>]], 'Show functions' },
-            ['<C-d>'] = { [[<cmd>NvimTreeToggle<CR>]], 'Toggle directory tree' },
+            ['<C-d>'] = { [[<cmd>NvimTreeFocus<CR>]], 'Toggle directory tree' },
             ['<C-p>'] = { [[<cmd>Lspsaga diagnostic_jump_prev<CR>]], 'Jump to previous' },
             ['<C-n>'] = { [[<cmd>Lspsaga diagnostic_jump_next<CR>]], 'Jump to next' },
             ['<C-a>'] = { [[<cmd>Lspsaga code_action<CR>]], 'Code action' },
             ['<C-f>'] = { [[<cmd>lua vim.lsp.buf.format()<CR>]], 'Format current buffer' },
+            ['<C-g>'] = { [[<cmd>lua require'neogen'.generate()<CR>]], 'Add documentation' },
             ['<A-b>'] = { [[<cmd>lua require'dap'.toggle_breakpoint()<CR>]], 'Set breakpoint' },
             ['<A-c>'] = { [[<cmd>lua if vim.g.dap_float then vim.g.dap_float.close() vim.g.dap_float = nil end if require'dap'.status() and require'dap'.status() ~= "" then require'dap'.continue() end<CR>]], 'Continue session' },
             ['<A-n>'] = { [[<cmd>lua if vim.g.dap_float then vim.g.dap_float.close() vim.g.dap_float = nil end if require'dap'.status() and require'dap'.status() ~= "" then require'dap'.step_over() end<CR>]], 'Step over' },
@@ -136,6 +137,10 @@ require 'loader'.load_plugin({
                 ['c'] = { [[<cmd>lua require('telescope.builtin').tags{ only_current_buffer = true }<CR>]], 'Tags in current buffer' },
                 ['?'] = { [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], 'Old files' },
             },
+            ['n'] = {
+                ['name'] = 'Annotation generation',
+                ['f'] = { [[<cmd>lua require'neogen'.generate()<CR>]], 'Generate annotation' }
+            },
             ['z'] = { [[<cmd>Twilight<CR>]], 'Toggle zen mode' },
             ['p'] = {
                 ['name'] = 'Nvim operations',
@@ -150,6 +155,7 @@ require 'loader'.load_plugin({
         wk.register({
         }, { mode = 'v', prefix = '<leader>', noremap = true, silent = true })
 
+        -- Insert mode
         wk.register({
             ['<Tab>'] = { [[<cmd>lua vimrc.cmp.cb_tab()<CR>]], 'Move to next completion item' },
             ['<S-Tab>'] = { [[<cmd>lua vimrc.cmp.cb_s_tab()<CR>]], 'Move to previous completion item' },
@@ -157,6 +163,8 @@ require 'loader'.load_plugin({
             ['<C-x>'] = { [[<cmd>lua if require'luasnip'.expandable() then require'luasnip'.expand() end<CR>]], 'Expand snippet' },
             ['<C-n>'] = { [[<cmd>lua if require'luasnip'.jumpable(1) then require'luasnip'.jump(1) end<CR>]], 'Jump to next position' },
             ['<C-p>'] = { [[<cmd>lua if require'luasnip'.jumpable(-1) then require'luasnip'.jump(-1) end<CR>]], 'Jump to next position' },
+            ['<C-h>'] = { [[<cmd>lua require'neogen'.jump_next()<CR>]], 'Jump to next placeholder' },
+            ['<C-l>'] = { [[<cmd>lua require'neogen'.jump_prev()<CR>]], 'Jump to previous placeholder' },
         }, { mode = 'i', prefix = '', noremap = true, silent = true })
     end
 })
