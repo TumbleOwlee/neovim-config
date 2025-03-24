@@ -23,6 +23,7 @@ require 'loader'.load_plugin({
         })
 
         local nvim_lsp = require 'lspconfig'
+
         local on_attach = function(_, bufnr)
             vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
             vim.cmd [[ command! Format execute 'lua vim.lsp.buf.formatting()' ]]
@@ -147,12 +148,20 @@ require 'loader'.load_plugin({
                         }
                     }
                 })
-            end
+            end,
+            ['docker_compose_langserver'] = function()
+                return 'docker_compose_langserver', configure('docker_compose_langserver')
+            end,
+            ['dockerfile_language_server'] = function()
+                return 'dockerls', configure('dockerls')
+            end,
         }
 
         for _, name in ipairs(mason_registry.get_installed_package_names()) do
             local n, cfg = (configs[name:gsub('-', '_')] or configs[1])(name:gsub('-', '_'))
-            nvim_lsp[n].setup(cfg)
+            if n ~= 'cspell' then
+                nvim_lsp[n].setup(cfg)
+            end
         end
     end
 })
