@@ -163,6 +163,7 @@ require 'loader'.load_plugin({
                 nvim_lsp[n].setup(cfg)
             end
         end
+        vim.lsp.inlay_hint.enable()
     end
 })
 

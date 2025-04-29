@@ -34,8 +34,9 @@ require 'plugins.pl-vim-lessmess'
 require 'plugins.pl-vim-rhubarb'
 require 'plugins.pl-which-key'
 require 'plugins.pl-neogen'
-require 'plugins.pl-spellwarn'
 require 'plugins.pl-copilot'
+require 'plugins.pl-oil'
+require 'plugins.pl-substitute'
 
 -- General settings
 require 'settings'
