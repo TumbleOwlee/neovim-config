@@ -1,6 +1,6 @@
 # Neovim Configuration
 
-[![status-badge](https://github-ci.code-ape.dev/api/badges/6/status.svg?workflow=Package)](https://github-ci.code-ape.dev/repos/6)
+[![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg)](https://github-ci.code-ape.dev/repos/1)
 [![Plugin Installation](https://github.com/TumbleOwlee/neovim-config/actions/workflows/cache.yml/badge.svg)](https://github.com/TumbleOwlee/neovim-config/actions/workflows/cache.yml)
 
 This repository contains a customized [Neovim](https://github.com/neovim/neovim) configuration for `C`, `C++` and `Rust` developement. Additional languages are configured but not the focus of the setup. Thus, it may be necessary to configure additional LSPs (see [`lua/plugins/pl-nvim-lspconfig.lua`](https://github.com/TumbleOwlee/neovim-config/blob/main/lua/plugins/pl-nvim-lspconfig.lua)). This configuration utilizes various plugins to add useful features. Each plugin is included in [`init.lua`](https://github.com/TumbleOwlee/neovim-config/blob/main/init.lua) but configured in its own file in `lua/plugins`.  On the other hand general settings are located in [`lua/settings.lua`](https://github.com/TumbleOwlee/neovim-config/blob/main/lua/settings.lua).
