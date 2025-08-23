@@ -154,6 +154,9 @@ require 'loader'.load_plugin({
             end,
             ['dockerfile_language_server'] = function()
                 return 'dockerls', configure('dockerls')
+            end,,
+            ['cmake_language_server'] = function()
+                return 'cmake', configure('cmake')
             end,
         }
 
@@ -163,7 +166,7 @@ require 'loader'.load_plugin({
                 nvim_lsp[n].setup(cfg)
             end
         end
-        --vim.lsp.inlay_hint.enable()
+        vim.lsp.inlay_hint.enable()
     end
 })
 
