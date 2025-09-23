@@ -154,7 +154,7 @@ require 'loader'.load_plugin({
             end,
             ['dockerfile_language_server'] = function()
                 return 'dockerls', configure('dockerls')
-            end,,
+            end,
             ['cmake_language_server'] = function()
                 return 'cmake', configure('cmake')
             end,
