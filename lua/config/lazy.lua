@@ -1,4 +1,5 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+local Util = require("config.util")
 
 -- Install lazy.nvim
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -24,3 +25,5 @@ require("lazy").setup({
 	},
 	checker = { enabled = true },
 })
+
+vim.api.nvim_create_user_command("SyncInstall", "Lazy update", { desc = "Install all plugins synchronously!" })

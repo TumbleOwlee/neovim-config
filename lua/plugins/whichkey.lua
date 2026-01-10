@@ -71,7 +71,7 @@ return {
 					},
 					{ "<A-p>", [[<cmd>lua require'dap'.repl.toggle()<CR>]], desc = "Show console" },
 					{ "<A-m>", [[<cmd>w<CR><cmd>bn<CR>]], desc = "Next buffer" },
-					{ "<A-q>", [[<cmd>lua require'helper'.search_pattern()<CR>]], desc = "Next buffer" },
+					{ "<A-q>", [[<cmd>lua require'custom.search'.search_pattern()<CR>]], desc = "Next buffer" },
 					mode = "n",
 					remap = false,
 					silent = false,

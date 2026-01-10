@@ -9,3 +9,5 @@ function Util.abort(msg, context)
 	vim.fn.getchar()
 	os.exit(1)
 end
+
+return Util
