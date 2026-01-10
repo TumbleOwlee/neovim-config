@@ -45,11 +45,15 @@ return {
 			})
 
 			local configure = function(name)
-				return {
-					cmd = vim.lsp.config[name].cmd,
-					on_attach = on_attach,
-					capabilities = capabilities,
-				}
+				if vim.lsp.config[name] then
+					return {
+						cmd = vim.lsp.config[name].cmd,
+						on_attach = on_attach,
+						capabilities = capabilities,
+					}
+				else
+					return nil
+				end
 			end
 
 			local configs = {
@@ -158,7 +162,7 @@ return {
 
 			for _, name in ipairs(mason_registry.get_installed_package_names()) do
 				local n, cfg = (configs[name:gsub("-", "_")] or configs[1])(name:gsub("-", "_"))
-				if n ~= "cspell" then
+				if n ~= "cspell" and cfg ~= nil then
 					vim.lsp.config[name] = cfg
 				end
 			end
