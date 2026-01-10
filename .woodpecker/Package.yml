@@ -4,9 +4,7 @@ steps:
 
     commands:
       - mkdir -p ~/.config/nvim
-      - mkdir -p ~/.local/share/nvim/pckr/pckr.nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - git clone --filter=blob:none https://github.com/lewis6991/pckr.nvim ~/.local/share/nvim/pckr/pckr.nvim
       - nvim +'SyncInstall' +qall || exit 1
 
     when:
@@ -18,9 +16,7 @@ steps:
 
     commands:
       - mkdir -p ~/.config/nvim
-      - mkdir -p ~/.local/share/nvim/pckr/pckr.nvim
       - cp -r ./init.lua ./lua ~/.config/nvim/ || exit 1
-      - git clone --filter=blob:none https://github.com/lewis6991/pckr.nvim ~/.local/share/nvim/pckr/pckr.nvim
       - nvim +'SyncInstall' +qall || exit 1
       - export GIT_PATH=$(pwd)
       - cd ~/
