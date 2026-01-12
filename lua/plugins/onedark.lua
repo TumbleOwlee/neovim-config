@@ -1,23 +1,23 @@
 return {
-	{
-		"joshdick/onedark.vim",
-		config = function()
-			vim.api.nvim_exec(
-				[[
+    {
+        "joshdick/onedark.vim",
+        config = function()
+            vim.api.nvim_exec(
+                [[
             augroup ColorExtend
             autocmd!
             autocmd ColorScheme * call onedark#extend_highlight("CursorLineNr", { "fg": { "gui": "#000000"}, "bg": { "gui": "#ad3d2a"} })
             augroup end
             ]],
-				false
-			)
+                false
+            )
 
-			-- Set colorscheme (order is important here)
-			vim.o.termguicolors = true
-			vim.g.onedark_terminal_italics = 2
+            -- Set colorscheme (order is important here)
+            vim.o.termguicolors = true
+            vim.g.onedark_terminal_italics = 2
 
-			-- Enable colorscheme
-			vim.cmd([[silent! colorscheme onedark]])
-		end,
-	},
+            -- Enable colorscheme
+            vim.cmd([[silent! colorscheme onedark]])
+        end,
+    },
 }
