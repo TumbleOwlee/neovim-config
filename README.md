@@ -3,7 +3,8 @@
 > [!IMPORTANT]
 > This is a personal neovim configuration. It may be updated any time. If you have any suggestions or plugin recommendations, please share them and I may introduce them to this environment.
 
-[![status--badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?workflow=Package)](https://github-ci.code-ape.dev/repos/1)
+[![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?events=tag&workflow=Package&step=artifact)](https://github-ci.code-ape.dev/repos/1)
+[![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?events=tag&workflow=Package&step=upload)](https://github-ci.code-ape.dev/repos/1)
 [![Plugin Installation](https://github.com/TumbleOwlee/neovim-config/actions/workflows/cache.yml/badge.svg)](https://github.com/TumbleOwlee/neovim-config/actions/workflows/cache.yml)
 
 This repository contains a customized [Neovim](https://github.com/neovim/neovim) configuration for `C`, `C++` and `Rust` developement. Additional languages are configured but not the focus of the setup. Thus, it may be necessary to configure additional LSPs (see [`lua/plugins/nvim-lspconfig.lua`](https://github.com/TumbleOwlee/neovim-config/blob/main/lua/plugins/nvim-lspconfig.lua)). This configuration utilizes various plugins to add useful features. Each plugin is configured in [`lua/plugins`](https://github.com/TumbleOwlee/neovim-config/blob/main/Lua/plugins).  On the other hand general settings are located in [`lua/config`](https://github.com/TumbleOwlee/neovim-config/blob/main/lua/config).
