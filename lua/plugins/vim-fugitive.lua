@@ -1,4 +1,4 @@
 -- git integration
 return {
-    { "tpope/vim-fugitive" },
+	{ "tpope/vim-fugitive" },
 }
