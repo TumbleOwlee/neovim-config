@@ -271,7 +271,8 @@ return {
 						{ "<leader>t?", [[<cmd>lua require('telescope.builtin').oldfiles()<CR>]], desc = "Old files" },
 					},
 					{
-						{ "<leader>n", group = "Annotation generation" },
+						{ "<leader>n", group = "Annotation / Notification" },
+						{ "<leader>ns", [[<cmd>lua Snacks.notifier.show_history()<CR>]], desc = "Show notification history" },
 						{ "<leader>nf", [[<cmd>lua require'neogen'.generate()<CR>]], desc = "Generate annotation" },
 					},
 					{ "<leader>z", [[<cmd>Twilight<CR>]], desc = "Toggle zen mode" },
