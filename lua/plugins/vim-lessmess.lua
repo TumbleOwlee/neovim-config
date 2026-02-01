@@ -1,4 +1,4 @@
 -- Remove trailing whitespaces
 return {
-	{ "mboughaba/vim-lessmess" },
+    { "mboughaba/vim-lessmess" },
 }
