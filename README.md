@@ -1,5 +1,9 @@
 # Neovim Configuration
 
+## title
+
+### title
+
 > [!IMPORTANT]
 > This is a personal neovim configuration. It may be updated any time. If you have any suggestions or plugin recommendations, please share them and I may introduce them to this environment.
 
@@ -23,3 +27,15 @@ git clone https://github.com/TumbleOwlee/neovim-config ~/.config/nvim/
 > The nightly build is executed in each commit. This the installed neovim setup is always up-to-date.
 
 In case your environment doesn't have internet access, this repository provides a nightly packages containing the configuration and all installed plugins. Just go to the [nightly release](https://github.com/TumbleOwlee/neovim-config/releases/tag/nightly) and download the [`neovim-config.tar.gz`](https://github.com/TumbleOwlee/neovim-config/releases/download/nightly/neovim-config.tar.gz). Move the archive onto your system and just unpack it into `~/` using `tar -xvf neovim-config.tar.gz`. The archive provides the contents of `~/.config/nvim` and `.local/nvim`. Afterwards you are ready to go.
+
+*[x] todo
+
+*[ ] test
+
+##### Something
+
+```rust
+fn main() {
+    println!("test");
+}
+```

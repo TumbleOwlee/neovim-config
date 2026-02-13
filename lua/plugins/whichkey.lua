@@ -25,8 +25,9 @@ return {
                         { "gh", [[<cmd>Lspsaga finder<CR>]],                   desc = "LSP finder" },
                         { "gr", [[<cmd>lua vim.lsp.buf.references()<CR>]],     desc = "Show references" },
                     },
-                    { "K",     [[<cmd>Lspsaga hover_doc<CR>]],        desc = "Show documentation" },
-                    { "<A-d>", [[<cmd>Lspsaga term_toggle tmux<CR>]], desc = "Open terminal" },
+                    { "K",     [[<cmd>Lspsaga hover_doc<CR>]],                 desc = "Show documentation" },
+                    { "<A-d>", [[<cmd>Lspsaga term_toggle tmux<CR>]],          desc = "Open terminal" },
+                    { "<A-e>", [[<cmd>lua require'CopilotChat'.toggle()<CR>]], desc = "Open CopilotChat" },
                     {
                         "<A-w>",
                         [[<cmd>lua require('telescope.builtin').lsp_document_symbols({ symbols='function' })<CR>]],
@@ -89,8 +90,8 @@ return {
                     },
                     {
                         { "<leader>s",  group = "Session Handling" },
-                        { "<leader>ss", [[<cmd>lua require'resession'.save(vim.fn.getcwd(), { dir = 'dirsession', notify = true})<CR>]],         desc = "Save session" },
-                        { "<leader>sl", [[<cmd>lua require'resession'.load(vim.fn.getcwd(), { dir = 'dirsession', silence_errors = true})<CR>]], desc = "Load session" },
+                        { "<leader>ss", [[<cmd>lua require'resession'.save(vim.fn.getcwd(), { dir = 'dirsession', notify = true})<CR>]],                        desc = "Save session" },
+                        { "<leader>sl", [[<cmd>lua require'resession'.load(vim.fn.getcwd(), { dir = 'dirsession', notify = true, silence_errors = true})<CR>]], desc = "Load session" },
                     },
                     { "<leader>D", [[<cmd>lua vim.lsp.buf.type_definition()<CR>]], desc = "Type definition" },
                     {

@@ -11,6 +11,24 @@ return {
         branch = 'main',
         build = ":TSUpdate",
         opts = {
+            ensure_installed = {
+                "bash",
+                "html",
+                "javascript",
+                "json",
+                "lua",
+                "markdown",
+                "markdown_inline",
+                "python",
+                "query",
+                "regex",
+                "tsx",
+                "typescript",
+                "vim",
+                "yaml",
+                "rust",
+                "cpp",
+            },
             highlight = {
                 enable = true, -- false will disable the whole extension
             },
