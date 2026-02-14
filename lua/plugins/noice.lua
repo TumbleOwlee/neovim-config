@@ -6,8 +6,8 @@ return {
             views = {
                 cmdline_popup = {
                     border = {
-                        style = "none",
-                        padding = { 1, 2 },
+                        style = "single",
+                        padding = { 0, 2 },
                     },
                     filter_options = {},
                     win_options = {
@@ -33,8 +33,8 @@ return {
                         height = 10,
                     },
                     border = {
-                        style = "none",
-                        padding = { 1, 1 },
+                        style = "single",
+                        padding = { 0, 1 },
                     },
                     win_options = {
                         winhighlight = { Normal = "NormalFloat", FloatBorder = "FloatBorder" },
