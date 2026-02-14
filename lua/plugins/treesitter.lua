@@ -81,11 +81,29 @@ return {
                 },
             }
             require 'nvim-treesitter'.setup(opts)
-            vim.fn.system('tree-sitter --version')
-            if not (vim.v.shell_error == 0) then
-                vim.notify("TSInstall won't work. Run 'cargo install --locked tree-sitter-cli'", vim.log.levels.ERROR,
-                    {})
-            end
+
+            vim.defer_fn(function()
+                vim.fn.system('tree-sitter --version')
+                if not (vim.v.shell_error == 0) then
+                    vim.notify("Try installing 'tree-sitter-cli'. May block!",
+                        vim.log.levels.WARN,
+                        { title = "Tree-Sitter-CLI" })
+                    vim.fn.system('cargo install --locked tree-sitter-cli')
+                    if not (vim.v.shell_error == 0) then
+                        vim.notify("TSInstall won't work. Run 'cargo install --locked tree-sitter-cli'!",
+                            vim.log.levels.ERROR,
+                            { title = "Tree-Sitter-CLI" })
+                    else
+                        vim.notify("Missing 'tree-sitter-cli' installed!",
+                            vim.log.levels.INFO,
+                            { title = "Tree-Sitter-CLI" })
+                    end
+                else
+                    vim.notify("Executable present. Ready to install parsers.",
+                        vim.log.levels.INFO,
+                        { title = "Tree-Sitter-CLI" })
+                end
+            end, 1000)
         end
     },
 }
