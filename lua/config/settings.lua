@@ -42,9 +42,6 @@ vim.wo.signcolumn = "yes"
 
 vim.o.cursorline = true
 
---Set background opacity
-vim.cmd("highlight Normal guibg=none")
-
 -- Highlight on yank
 vim.api.nvim_exec(
     [[

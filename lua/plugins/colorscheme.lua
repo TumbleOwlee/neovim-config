@@ -27,14 +27,29 @@ return {
             vim.cmd.colorscheme('cyberdream')
         end,
     },
-    { 
-        "catppuccin/nvim", 
-        name = "catppuccin", 
-        priority = 1000 
+    {
+        "catppuccin/nvim",
+        name = "catppuccin",
+        priority = 1000
     },
-    { 
-        "rose-pine/neovim", 
-        name = "rose-pine", 
-        priority = 1000 
+    {
+        "rose-pine/neovim",
+        name = "rose-pine",
+        priority = 1000
+    },
+    {
+        "ellisonleao/gruvbox.nvim",
+        priority = 1000,
+        opts = {
+            terminal_colors = true,
+            transparent_mode = false,
+        }
+    },
+    {
+        "rebelot/kanagawa.nvim",
+        priority = 1000,
+        opts = {
+            compile = true,
+        }
     }
 }
