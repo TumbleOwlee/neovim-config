@@ -76,6 +76,7 @@ return {
                     { "<tab>",   [[<cmd>tabnext<CR>]],                                     desc = "Next tab" },
                     { "<S-tab>", [[<cmd>tabprevious<CR>]],                                 desc = "Previous tab" },
                     { "<C-t>",   [[<cmd>tabnew %<CR>]],                                    desc = "Open new tab" },
+                    { "<C-q>",   [[<cmd>tabclose<CR>]],                                    desc = "Close current tab" },
                     { "j",       "gj",                                                     desc = "Move cursor down" },
                     { "k",       "gk",                                                     desc = "Move cursor up" },
                     mode = "n",
