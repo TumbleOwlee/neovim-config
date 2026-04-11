@@ -1,9 +1,5 @@
 # Neovim Configuration
 
-## title
-
-### title
-
 > [!IMPORTANT]
 > This is a personal neovim configuration. It may be updated any time. If you have any suggestions or plugin recommendations, please share them and I may introduce them to this environment.
 
