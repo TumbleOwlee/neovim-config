@@ -1,13 +1,13 @@
 return {
     {
-        "OXY2DEV/helpview.nvim",
+        'OXY2DEV/helpview.nvim',
         opts = {
             preview = {
-                icon_provider = "mini",
+                icon_provider = 'mini',
             },
         },
         dependencies = {
-            "nvim-mini/mini.icons",
+            'nvim-mini/mini.icons',
         },
     },
 }

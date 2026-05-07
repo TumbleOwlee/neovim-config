@@ -1,6 +1,6 @@
 return {
     {
-        "danymat/neogen",
+        'danymat/neogen',
         opts = {},
     },
 }

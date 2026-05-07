@@ -1,7 +1,7 @@
 -- Edit filesystem as files
 return {
     {
-        "stevearc/oil.nvim",
+        'stevearc/oil.nvim',
         opts = {},
     },
 }

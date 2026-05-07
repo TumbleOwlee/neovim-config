@@ -1,2 +1,2 @@
-require("config")
-require("custom")
+require('config')
+require('custom')

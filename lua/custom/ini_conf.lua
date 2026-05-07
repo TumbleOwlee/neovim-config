@@ -1,10 +1,10 @@
-vim.filetype.add {
+vim.filetype.add({
     extension = {
-        conf = "dosini",
-        ini = "dosini",
+        conf = 'dosini',
+        ini = 'dosini',
     },
     pattern = {
-        ["*.conf$"] = "dosini",
-        ["*.ini$"] = "dosini",
-    }
-}
+        ['*.conf$'] = 'dosini',
+        ['*.ini$'] = 'dosini',
+    },
+})

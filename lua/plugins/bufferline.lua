@@ -1,9 +1,9 @@
 return {
     {
-        "akinsho/bufferline.nvim",
+        'akinsho/bufferline.nvim',
         opts = {
             options = {
-                diagnostics = "nvim_lsp",
+                diagnostics = 'nvim_lsp',
             },
         },
     },

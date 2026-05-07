@@ -1,6 +1,6 @@
 return {
     {
-        "nvimdev/lspsaga.nvim",
+        'nvimdev/lspsaga.nvim',
         opts = {
             floaterm = {
                 height = 0.9,
@@ -8,8 +8,8 @@ return {
             },
         },
         dependencies = {
-            "nvim-treesitter/nvim-treesitter",
-            "nvim-tree/nvim-web-devicons",
+            'nvim-treesitter/nvim-treesitter',
+            'nvim-tree/nvim-web-devicons',
         },
     },
 }

@@ -1,18 +1,18 @@
 return {
     {
-        "folke/tokyonight.nvim",
+        'folke/tokyonight.nvim',
         lazy = false,
         priority = 1000,
         config = function()
-            require("tokyonight").setup({})
+            require('tokyonight').setup({})
             vim.cmd.colorscheme('tokyonight')
         end,
     },
     {
-        "vague-theme/vague.nvim",
+        'vague-theme/vague.nvim',
         priority = 1000,
         config = function()
-            require("vague").setup({
+            require('vague').setup({
                 transparent = true,
             })
             vim.cmd.colorscheme('vague')
@@ -28,28 +28,28 @@ return {
         end,
     },
     {
-        "catppuccin/nvim",
-        name = "catppuccin",
-        priority = 1000
+        'catppuccin/nvim',
+        name = 'catppuccin',
+        priority = 1000,
     },
     {
-        "rose-pine/neovim",
-        name = "rose-pine",
-        priority = 1000
+        'rose-pine/neovim',
+        name = 'rose-pine',
+        priority = 1000,
     },
     {
-        "ellisonleao/gruvbox.nvim",
+        'ellisonleao/gruvbox.nvim',
         priority = 1000,
         opts = {
             terminal_colors = true,
             transparent_mode = false,
-        }
+        },
     },
     {
-        "rebelot/kanagawa.nvim",
+        'rebelot/kanagawa.nvim',
         priority = 1000,
         opts = {
             compile = true,
-        }
-    }
+        },
+    },
 }

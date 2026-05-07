@@ -1,8 +1,8 @@
 -- List of diagnostics
 return {
     {
-        "folke/trouble.nvim",
-        dependencies = { "kyazdani42/nvim-web-devicons" },
+        'folke/trouble.nvim',
+        dependencies = { 'kyazdani42/nvim-web-devicons' },
         opts = {
             modes = {
                 diagnostics = {

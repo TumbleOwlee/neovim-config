@@ -3,7 +3,7 @@ vim.o.exrc = true
 vim.o.secure = true
 
 --Incremental live completion
-vim.o.inccommand = "nosplit"
+vim.o.inccommand = 'nosplit'
 
 --Set highlight on search
 vim.o.hlsearch = false
@@ -15,7 +15,7 @@ vim.wo.number = true
 vim.o.hidden = true
 
 --Enable mouse mode
-vim.o.mouse = "a"
+vim.o.mouse = 'a'
 
 --Enable break indent
 vim.o.breakindent = true
@@ -38,7 +38,7 @@ vim.o.smartcase = true
 
 --Decrease update time
 vim.o.updatetime = 250
-vim.wo.signcolumn = "yes"
+vim.wo.signcolumn = 'yes'
 
 vim.o.cursorline = true
 
@@ -54,7 +54,7 @@ augroup end
 )
 
 -- Y yank until the end of line
-vim.api.nvim_set_keymap("n", "Y", "y$", { noremap = true })
+vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
 
 -- Set completeopt to have a better completion experience
-vim.o.completeopt = "menu,menuone,noselect"
+vim.o.completeopt = 'menu,menuone,noselect'

@@ -1,12 +1,12 @@
 -- Activate highlight on search pattern
-local hl_ns = vim.api.nvim_create_namespace("search")
-local hlsearch_group = vim.api.nvim_create_augroup("hlsearch_group", { clear = true })
+local hl_ns = vim.api.nvim_create_namespace('search')
+local hlsearch_group = vim.api.nvim_create_augroup('hlsearch_group', { clear = true })
 
 local function manage_hlsearch(char)
     local key = vim.fn.keytrans(char)
-    local keys = { "<CR>", "n", "N", "*", "#", "?", "/" }
+    local keys = { '<CR>', 'n', 'N', '*', '#', '?', '/' }
 
-    if vim.fn.mode() == "n" then
+    if vim.fn.mode() == 'n' then
         if not vim.tbl_contains(keys, key) then
             vim.cmd([[ :set nohlsearch ]])
         elseif vim.tbl_contains(keys, key) then
@@ -17,7 +17,7 @@ local function manage_hlsearch(char)
     vim.on_key(nil, hl_ns)
 end
 
-vim.api.nvim_create_autocmd("CursorMoved", {
+vim.api.nvim_create_autocmd('CursorMoved', {
     group = hlsearch_group,
     callback = function()
         vim.on_key(manage_hlsearch, hl_ns)
@@ -28,8 +28,8 @@ local M = {}
 
 -- Search pattern by folding non-matching lines
 function M.search_pattern()
-    local pattern = vim.fn.input("Pattern: ")
-    vim.o.foldmethod = "expr"
+    local pattern = vim.fn.input('Pattern: ')
+    vim.o.foldmethod = 'expr'
     vim.o.foldexpr = "getline(v:lnum)!~'" .. pattern .. "'"
 end
 

@@ -1,7 +1,7 @@
 -- Dims inactive potions of code
 return {
     {
-        "folke/twilight.nvim",
+        'folke/twilight.nvim',
         opts = {
             dimming = {
                 alpha = 0.5,

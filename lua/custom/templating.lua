@@ -2,8 +2,8 @@
 -- and replace it automatically on open
 
 -- Template placeholder replacement
-vim.api.nvim_create_autocmd({ "BufRead" }, {
-    pattern = { "*" },
+vim.api.nvim_create_autocmd({ 'BufRead' }, {
+    pattern = { '*' },
     callback = function()
         local bufnr = vim.api.nvim_get_current_buf()
         if not vim.api.nvim_buf_get_option(bufnr, 'modifiable') then
