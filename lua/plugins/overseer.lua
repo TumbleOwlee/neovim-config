@@ -269,7 +269,30 @@ return {
                 task:start()
                 vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = 'CMake' })
             end, {
-                desc = 'Run your makeprg as an Overseer task',
+                desc = "Run your CMake command as an Overseer task",
+                nargs = "*",
+                bang = true,
+            })
+
+            vim.api.nvim_create_user_command("Run", function(params)
+                -- Insert args at the '$*' in the makeprg
+                local cmd = ""
+                if params.args:len() > 0 then
+                    cmd = params.args
+                else
+                    vim.notify("No command specified!", vim.log.levels.ERROR, { title = "Run" })
+                end
+                local task = require("overseer").new_task({
+                    cmd = vim.fn.expandcmd(cmd),
+                    components = {
+                        "unique",
+                        "default",
+                    },
+                })
+                task:start()
+                vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = "Overseeer Run" })
+            end, {
+                desc = 'Run command as an Overseer task',
                 nargs = '*',
                 bang = true,
             })
