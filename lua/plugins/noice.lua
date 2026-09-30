@@ -58,8 +58,14 @@ return {
                     },
                 },
             },
-            popupmenu = {
-                backend = 'cmp',
+            -- Notifications and LSP progress are shown by snacks.notifier
+            notify = {
+                enabled = false,
+            },
+            lsp = {
+                progress = {
+                    enabled = false,
+                },
             },
             presets = {
                 bottom_search = false, -- use a classic bottom cmdline for search
@@ -71,8 +77,6 @@ return {
         },
         dependencies = {
             'MunifTanjim/nui.nvim',
-            'rcarriga/nvim-notify',
-            'hrsh7th/nvim-cmp',
         },
     },
 }

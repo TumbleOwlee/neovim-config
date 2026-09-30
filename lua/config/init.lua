@@ -1,3 +1,5 @@
 require('config.util')
-require('config.lazy')
 require('config.settings')
+require('config.lazy')
+require('config.keymaps')
+require('config.lsp')

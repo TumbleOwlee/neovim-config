@@ -1,60 +1,55 @@
---Enable local nvim files
-vim.o.exrc = true
-vim.o.secure = true
+local opt = vim.opt
+
+--Enable project-local .nvim.lua/.exrc files (asks for trust before running them)
+opt.exrc = true
 
 --Incremental live completion
-vim.o.inccommand = 'nosplit'
+opt.inccommand = 'nosplit'
 
---Set highlight on search
-vim.o.hlsearch = false
+--Highlight on search is toggled by custom.search
+opt.hlsearch = false
 
 --Make line numbers default
-vim.wo.number = true
-
---Do not save when switching buffers
-vim.o.hidden = true
-
---Enable mouse mode
-vim.o.mouse = 'a'
+opt.number = true
 
 --Enable break indent
-vim.o.breakindent = true
+opt.breakindent = true
 
---Set tab width
-vim.o.tabstop = 4
-
---Set shiftwidth
-vim.o.shiftwidth = 4
-
---Set expandtab
-vim.o.expandtab = true
+--Indentation
+opt.tabstop = 4
+opt.shiftwidth = 4
+opt.expandtab = true
 
 --Save undo history
-vim.cmd([[set undofile]])
+opt.undofile = true
 
 --Case insensitive searching UNLESS /C or capital in search
-vim.o.ignorecase = true
-vim.o.smartcase = true
+opt.ignorecase = true
+opt.smartcase = true
 
 --Decrease update time
-vim.o.updatetime = 250
-vim.wo.signcolumn = 'yes'
+opt.updatetime = 250
+opt.signcolumn = 'yes'
 
-vim.o.cursorline = true
+opt.cursorline = true
+
+--24-bit colors (auto-detection fails in some terminals and headless)
+opt.termguicolors = true
+
+--Open vertical splits on the right
+opt.splitright = true
+
+--Show end of line markers
+opt.list = true
+opt.listchars:append('eol:↴')
+
+--Set completeopt to have a better completion experience
+opt.completeopt = 'menu,menuone,noselect'
 
 -- Highlight on yank
-vim.api.nvim_exec(
-    [[
-augroup YankHighlight
-autocmd!
-autocmd TextYankPost * silent! lua vim.highlight.on_yank()
-augroup end
-]],
-    false
-)
-
--- Y yank until the end of line
-vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true })
-
--- Set completeopt to have a better completion experience
-vim.o.completeopt = 'menu,menuone,noselect'
+vim.api.nvim_create_autocmd('TextYankPost', {
+    group = vim.api.nvim_create_augroup('YankHighlight', { clear = true }),
+    callback = function()
+        vim.hl.on_yank()
+    end,
+})

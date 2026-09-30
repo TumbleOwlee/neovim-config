@@ -3,14 +3,85 @@ return {
         'folke/snacks.nvim',
         priority = 1000,
         lazy = false,
+        keys = {
+            -- Pickers
+            { '<leader><Space>', function() Snacks.picker.buffers() end, desc = 'List buffers' },
+            { '<leader>ff', function() Snacks.picker.files() end, desc = 'Find files' },
+            { '<leader>fg', function() Snacks.picker.grep() end, desc = 'Live grep' },
+            { '<leader>fw', function() Snacks.picker.grep_word() end, desc = 'Grep word', mode = { 'n', 'x' } },
+            { '<leader>fz', function() Snacks.picker.lines() end, desc = 'Fuzzy find in buffer' },
+            { '<leader>fr', function() Snacks.picker.recent() end, desc = 'Recent files' },
+            { '<leader>fm', function() Snacks.picker.marks() end, desc = 'Marks' },
+            { '<leader>fh', function() Snacks.picker.help() end, desc = 'Help tags' },
+            { '<leader>ft', function() Snacks.picker.tags() end, desc = 'Tags' },
+            { '<leader>fk', function() Snacks.picker.keymaps() end, desc = 'Keymaps' },
+            { '<leader>fp', function() Snacks.picker.resume() end, desc = 'Resume last picker' },
+            {
+                '<A-w>',
+                function()
+                    Snacks.picker.lsp_symbols({ filter = { default = { 'Function', 'Method' } } })
+                end,
+                desc = 'Show functions',
+            },
+            -- Explorer
+            { '<leader>e', function() Snacks.explorer() end, desc = 'Toggle file explorer' },
+            {
+                '<A-d>',
+                function()
+                    local tmux = Snacks.terminal.get('tmux', { create = false })
+                    require('custom.terminals').hide_others(tmux)
+                    Snacks.terminal.toggle('tmux', { win = { position = 'float', width = 0.9, height = 0.9, border = 'rounded' } })
+                end,
+                mode = { 'n', 't' },
+                desc = 'Toggle terminal',
+            },
+            {
+                '<leader>ns',
+                function()
+                    Snacks.notifier.show_history()
+                end,
+                desc = 'Show notification history',
+            },
+        },
         ---@type snacks.Config
         config = function()
             require('snacks').setup({
+                dashboard = {
+                    preset = {
+                        keys = {
+                            { icon = ' ', key = 'f', desc = 'Find File', action = ':lua Snacks.picker.files()' },
+                            { icon = ' ', key = '?', desc = 'Recents', action = ':lua Snacks.picker.recent()' },
+                            { icon = ' ', key = 'w', desc = 'Find Word', action = ':lua Snacks.picker.grep()' },
+                            { icon = ' ', key = 'n', desc = 'New File', action = ':ene | startinsert' },
+                            { icon = ' ', key = 'b', desc = 'Bookmarks', action = ':lua Snacks.picker.marks()' },
+                            {
+                                icon = '󰸧 ',
+                                key = 's',
+                                desc = 'Load Last Session',
+                                action = function()
+                                    require('resession').load(
+                                        vim.fn.getcwd(),
+                                        { dir = 'dirsession', silence_errors = true }
+                                    )
+                                end,
+                            },
+                            { icon = ' ', key = 'u', desc = 'Update Plugins', action = ':Lazy update' },
+                            { icon = '󰗼 ', key = 'q', desc = 'Exit', action = ':qa' },
+                        },
+                    },
+                    sections = {
+                        { section = 'header' },
+                        { section = 'keys', gap = 1, padding = 1 },
+                        { section = 'startup' },
+                    },
+                },
                 notifier = {
                     render = 'fancy',
                     timeout = 6000,
                 },
                 picker = {},
+                -- Directories are opened with oil
+                explorer = { replace_netrw = false },
             })
             ---@type table<number, {token:lsp.ProgressToken, msg:string, done:boolean}[]>
             local progress = vim.defaulttable()

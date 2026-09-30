@@ -5,7 +5,7 @@ return {
             'nvim-mini/mini.icons',
         },
         config = function()
-            opts = {
+            local opts = {
                 experimental = { check_rtp_message = false },
                 preview = {
                     modes = { 'n', 'i', 'no', 'c' },

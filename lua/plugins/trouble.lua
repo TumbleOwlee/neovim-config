@@ -2,7 +2,12 @@
 return {
     {
         'folke/trouble.nvim',
-        dependencies = { 'kyazdani42/nvim-web-devicons' },
+        cmd = 'Trouble',
+        keys = {
+            { '<leader>qt', '<cmd>Trouble diagnostics toggle<CR>', desc = 'Toggle diagnostics list' },
+            { '<leader>qb', '<cmd>Trouble diagnostics toggle filter.buf=0<CR>', desc = 'Buffer diagnostics' },
+            { '<leader>qq', '<cmd>Trouble qflist toggle<CR>', desc = 'Quickfix list' },
+        },
         opts = {
             modes = {
                 diagnostics = {

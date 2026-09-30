@@ -1,36 +1,45 @@
 -- Define placeholders and how to retrieve their values
--- and replace it automatically on open
+-- and replace it automatically on open.
+--
+-- vim.g.template_context_map = { ['<lua pattern on buffer name>'] = { ['<placeholder>'] = '<value>' } }
 
 -- Template placeholder replacement
-vim.api.nvim_create_autocmd({ 'BufRead' }, {
-    pattern = { '*' },
-    callback = function()
-        local bufnr = vim.api.nvim_get_current_buf()
-        if not vim.api.nvim_buf_get_option(bufnr, 'modifiable') then
+vim.api.nvim_create_autocmd('BufRead', {
+    group = vim.api.nvim_create_augroup('Templating', { clear = true }),
+    callback = function(args)
+        local buf = args.buf
+        local context = vim.g.template_context_map
+        if not context or not vim.bo[buf].modifiable then
             return
         end
 
-        local buf_name = vim.api.nvim_buf_get_name(0)
-        local context = vim.g.template_context_map or {}
-
-        local config = {}
+        local buf_name = vim.api.nvim_buf_get_name(buf)
+        local config
         for pattern, cfg in pairs(context) do
-            if string.match(buf_name, pattern) then
+            if buf_name:match(pattern) then
                 config = cfg
                 break
             end
         end
-
-        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
-        for nr, line in ipairs(lines) do
-            for key, value in pairs(config) do
-                line = line:gsub(key, value)
-            end
-            vim.api.nvim_buf_set_lines(0, nr - 1, nr, true, { line })
+        if not config or vim.tbl_isempty(config) then
+            return
         end
 
-        if lines[1] then
-            vim.api.nvim_win_set_cursor(0, { 1, lines[1]:len() })
+        -- Only touch lines that actually contain a placeholder
+        local first_line
+        for nr, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, true)) do
+            local new = line
+            for key, value in pairs(config) do
+                new = new:gsub(vim.pesc(key), (tostring(value):gsub('%%', '%%%%')))
+            end
+            if new ~= line then
+                vim.api.nvim_buf_set_lines(buf, nr - 1, nr, true, { new })
+            end
+            first_line = first_line or new
+        end
+
+        if first_line and buf == vim.api.nvim_get_current_buf() then
+            vim.api.nvim_win_set_cursor(0, { 1, #first_line })
         end
     end,
 })

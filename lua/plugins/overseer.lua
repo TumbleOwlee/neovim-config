@@ -1,13 +1,30 @@
 return {
     {
         'stevearc/resession.nvim',
-        lazy = true,
+        -- Must be loaded before VimEnter to restore the directory session
+        lazy = false,
+        keys = {
+            {
+                '<leader>ss',
+                function()
+                    require('resession').save(vim.fn.getcwd(), { dir = 'dirsession', notify = true })
+                end,
+                desc = 'Save session',
+            },
+            {
+                '<leader>sl',
+                function()
+                    require('resession').load(vim.fn.getcwd(), { dir = 'dirsession', silence_errors = true })
+                end,
+                desc = 'Load session',
+            },
+        },
         config = function()
             local opts = {
                 autosave = {
                     enabled = true,
                     interval = 60,
-                    notify = true,
+                    notify = false,
                 },
                 options = {
                     'binary',
@@ -32,22 +49,42 @@ return {
 
             local resession = require('resession')
             resession.setup(opts)
+
+            -- Directory sessions only when nvim is started without file args, stdin or UI (headless)
+            local function use_dir_session()
+                return vim.fn.argc(-1) == 0 and not vim.g.using_stdin and #vim.api.nvim_list_uis() > 0
+            end
+            -- Don't replace a session with an empty one (e.g. `nvim +SyncInstall +qall`)
+            local function has_file_buffers()
+                for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                    if vim.bo[buf].buflisted and vim.bo[buf].buftype == '' and vim.api.nvim_buf_get_name(buf) ~= '' then
+                        return true
+                    end
+                end
+                return false
+            end
+            local group = vim.api.nvim_create_augroup('DirSession', { clear = true })
             vim.api.nvim_create_autocmd('VimEnter', {
+                group = group,
                 callback = function()
-                    -- Only load the session if nvim was started with no args and without reading from stdin
-                    if vim.fn.argc(-1) == 0 and not vim.g.using_stdin then
-                        -- Save these to a different directory, so our manual sessions don't get polluted
+                    if use_dir_session() then
+                        -- Save these to a different directory, so our manual sessions don't get polluted.
+                        -- A restored session means the dashboard (empty buffer only) is not shown.
                         resession.load(vim.fn.getcwd(), { dir = 'dirsession', silence_errors = true })
                     end
                 end,
                 nested = true,
             })
             vim.api.nvim_create_autocmd('VimLeavePre', {
+                group = group,
                 callback = function()
-                    resession.save(vim.fn.getcwd(), { dir = 'dirsession', notify = true })
+                    if use_dir_session() and has_file_buffers() then
+                        resession.save(vim.fn.getcwd(), { dir = 'dirsession', notify = false })
+                    end
                 end,
             })
             vim.api.nvim_create_autocmd('StdinReadPre', {
+                group = group,
                 callback = function()
                     -- Store this for later
                     vim.g.using_stdin = true
@@ -56,29 +93,20 @@ return {
         end,
     },
     {
-        'ibhagwan/fzf-lua',
-        opts = {},
-        config = function()
-            require('fzf-lua').setup({})
-            require('fzf-lua').register_ui_select()
-        end,
-    },
-    {
         'stevearc/overseer.nvim',
-        dependencies = {
-            'ibhagwan/fzf-lua',
-        },
         cmd = {
             'Grep',
             'Make',
             'CMake',
+            'Run',
+            'OverseerRestartLast',
             'OverseerOpen',
             'OverseerRun',
             'OverseerToggle',
             'OverseerTestOutput',
         },
         keys = {
-            { '<leader>oo', '<cmd>OverseerRestartLast<CR>', mode = 'n', desc = '[O]verseer Restart [L]ast' },
+            { '<leader>ol', '<cmd>OverseerRestartLast<CR>', mode = 'n', desc = '[O]verseer Restart [L]ast' },
             { '<leader>oo', '<cmd>OverseerToggle! bottom<CR>', mode = 'n', desc = '[O]verseer [O]pen' },
             { '<leader>or', '<cmd>OverseerRun<CR>', mode = 'n', desc = '[O]verseer [R]un' },
             { '<leader>os', '<cmd>OverseerShell<CR>', mode = 'n', desc = '[O]verseer [S]hell' },
@@ -113,6 +141,8 @@ return {
                     'on_exit_set_status',
                     { 'on_complete_notify', system = 'unfocused' },
                     { 'on_complete_dispose', require_view = { 'SUCCESS', 'FAILURE' } },
+                    -- Show task output in a float when a task starts
+                    { 'open_output', direction = 'float', on_start = 'always' },
                 },
                 default_neotest = {
                     'unique',
@@ -120,17 +150,11 @@ return {
                     'default',
                 },
             },
-            wrap_builtins = {
+            experimental_wrap_builtins = {
                 enabled = false,
-                partial_condition = {
-                    noop = function(cmd, caller, opts)
-                        return true
-                    end,
-                },
             },
-            post_setup = {},
             task_list = {
-                direction = 'float',
+                direction = 'bottom',
             },
             form = {
                 border = 'rounded',
@@ -139,31 +163,13 @@ return {
                 border = 'rounded',
                 padding = 2,
             },
-            strategy = {
-                'terminal',
-                use_shell = true,
-                direction = 'float',
-                autoshow = 'on_load',
-            },
         },
         init = function()
             vim.cmd.cnoreabbrev('OS OverseerShell')
         end,
         config = function(_, opts)
-            local partial = opts.wrap_builtins.partial_condition
-            opts.wrap_builtins.condition = function(cmd, caller, opts)
-                for _, v in pairs(partial) do
-                    if not v(cmd, caller, opts) then
-                        return false
-                    end
-                end
-                return true
-            end
             local overseer = require('overseer')
             overseer.setup(opts)
-            for _, cb in pairs(opts.post_setup) do
-                cb()
-            end
             vim.api.nvim_create_user_command('OverseerTestOutput', function(params)
                 vim.cmd.tabnew()
                 vim.bo.bufhidden = 'wipe'
@@ -269,28 +275,26 @@ return {
                 task:start()
                 vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = 'CMake' })
             end, {
-                desc = "Run your CMake command as an Overseer task",
-                nargs = "*",
+                desc = 'Run your CMake command as an Overseer task',
+                nargs = '*',
                 bang = true,
             })
 
-            vim.api.nvim_create_user_command("Run", function(params)
-                -- Insert args at the '$*' in the makeprg
-                local cmd = ""
-                if params.args:len() > 0 then
-                    cmd = params.args
-                else
-                    vim.notify("No command specified!", vim.log.levels.ERROR, { title = "Run" })
+            vim.api.nvim_create_user_command('Run', function(params)
+                if params.args:len() == 0 then
+                    vim.notify('No command specified!', vim.log.levels.ERROR, { title = 'Run' })
+                    return
                 end
-                local task = require("overseer").new_task({
-                    cmd = vim.fn.expandcmd(cmd),
+                local cmd = vim.fn.expandcmd(params.args)
+                local task = overseer.new_task({
+                    cmd = cmd,
                     components = {
-                        "unique",
-                        "default",
+                        'unique',
+                        'default',
                     },
                 })
                 task:start()
-                vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = "Overseeer Run" })
+                vim.notify("Start '" .. cmd .. "'", vim.log.levels.INFO, { title = 'Overseer Run' })
             end, {
                 desc = 'Run command as an Overseer task',
                 nargs = '*',

@@ -1,15 +1,8 @@
+-- vague is the default colorscheme, the others are loaded on demand (e.g. via :Themery)
 return {
     {
-        'folke/tokyonight.nvim',
-        lazy = false,
-        priority = 1000,
-        config = function()
-            require('tokyonight').setup({})
-            vim.cmd.colorscheme('tokyonight')
-        end,
-    },
-    {
         'vague-theme/vague.nvim',
+        lazy = false,
         priority = 1000,
         config = function()
             require('vague').setup({
@@ -19,27 +12,28 @@ return {
         end,
     },
     {
+        'folke/tokyonight.nvim',
+        lazy = true,
+        opts = {},
+    },
+    {
         'scottmckendry/cyberdream.nvim',
-        enabled = not vim.g.opaque,
-        priority = 1000,
-        config = function()
-            require('cyberdream').setup({ transparent = true })
-            vim.cmd.colorscheme('cyberdream')
-        end,
+        lazy = true,
+        opts = { transparent = true },
     },
     {
         'catppuccin/nvim',
+        lazy = true,
         name = 'catppuccin',
-        priority = 1000,
     },
     {
         'rose-pine/neovim',
+        lazy = true,
         name = 'rose-pine',
-        priority = 1000,
     },
     {
         'ellisonleao/gruvbox.nvim',
-        priority = 1000,
+        lazy = true,
         opts = {
             terminal_colors = true,
             transparent_mode = false,
@@ -47,7 +41,7 @@ return {
     },
     {
         'rebelot/kanagawa.nvim',
-        priority = 1000,
+        lazy = true,
         opts = {
             compile = true,
         },

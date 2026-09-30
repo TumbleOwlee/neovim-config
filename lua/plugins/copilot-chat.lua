@@ -1,3 +1,4 @@
+-- GitHub Copilot chat (inline suggestions come from the native copilot LSP, see config/lsp.lua)
 return {
     {
         'CopilotC-Nvim/CopilotChat.nvim',
@@ -5,8 +6,18 @@ return {
             { 'nvim-lua/plenary.nvim' },
         },
         build = 'make tiktoken',
+        cmd = { 'CopilotChat', 'CopilotChatToggle', 'CopilotChatOpen', 'CopilotChatModels', 'CopilotChatPrompts' },
+        keys = {
+            { '<A-e>', '<cmd>CopilotChatToggle<CR>', desc = 'Toggle CopilotChat' },
+            { '<leader>Cc', '<cmd>CopilotChatToggle<CR>', desc = 'Toggle chat' },
+            { '<leader>Cm', '<cmd>CopilotChatModels<CR>', desc = 'Select model' },
+            { '<leader>Cp', '<cmd>CopilotChatPrompts<CR>', mode = { 'n', 'x' }, desc = 'Select prompt' },
+            { '<leader>Ce', '<cmd>CopilotChatExplain<CR>', mode = { 'n', 'x' }, desc = 'Explain code' },
+            { '<leader>Cr', '<cmd>CopilotChatReview<CR>', mode = { 'n', 'x' }, desc = 'Review code' },
+            { '<leader>Cf', '<cmd>CopilotChatFix<CR>', mode = { 'n', 'x' }, desc = 'Fix code' },
+        },
         config = function()
-            opts = {
+            require('CopilotChat').setup({
                 window = {
                     layout = 'vertical',
                     relative = 'win',
@@ -24,17 +35,14 @@ return {
                     tool = '🔧 Tool',
                 },
                 separator = '━━',
-                auto_fold = true,                   -- Automatically folds non-assistant messages
-                model = 'claude-opus-4.6',          -- Default model to use
+                auto_fold = true, -- Automatically folds non-assistant messages
+                model = 'claude-opus-4.6', -- Default model, see :CopilotChatModels
                 tools = { 'file', 'glob', 'grep' }, -- List of tools to use
-            }
+            })
 
-            require('CopilotChat').setup(opts)
-
-            vim.opt.splitright = true
-
-            -- Auto-command to customize chat buffer behavior
-            vim.api.nvim_create_autocmd('BufEnter', {
+            -- Customize chat buffer
+            vim.api.nvim_create_autocmd('FileType', {
+                group = vim.api.nvim_create_augroup('CopilotChatBuffer', { clear = true }),
                 pattern = 'copilot-chat',
                 callback = function()
                     vim.opt_local.relativenumber = false

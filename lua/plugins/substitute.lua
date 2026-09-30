@@ -1,15 +1,19 @@
 -- Substitute operator
+local function sub(fn)
+    return function()
+        require('substitute')[fn]()
+    end
+end
+
 return {
     {
         'gbprod/substitute.nvim',
-        config = function()
-            require('substitute').setup({})
-
-            -- Add keybindings
-            vim.keymap.set('n', 's', require('substitute').operator, { noremap = true })
-            vim.keymap.set('n', 'ss', require('substitute').line, { noremap = true })
-            vim.keymap.set('n', 'S', require('substitute').eol, { noremap = true })
-            vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
-        end,
+        keys = {
+            { 's', sub('operator'), desc = 'Substitute with register' },
+            { 'ss', sub('line'), desc = 'Substitute line' },
+            { 'S', sub('eol'), desc = 'Substitute to end of line' },
+            { 's', sub('visual'), mode = 'x', desc = 'Substitute selection' },
+        },
+        opts = {},
     },
 }

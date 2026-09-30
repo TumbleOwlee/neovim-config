@@ -2,10 +2,8 @@
 return {
     {
         'lukas-reineke/indent-blankline.nvim',
+        event = { 'BufReadPost', 'BufNewFile' },
         config = function()
-            vim.opt.list = true
-            vim.opt.listchars:append('eol:↴')
-
             -- highlight for indentation
             local highlight = {
                 'RainbowRed',
@@ -40,7 +38,7 @@ return {
                     show_end = true,
                 },
                 exclude = {
-                    filetypes = { 'help', 'packer', 'dashboard' },
+                    filetypes = { 'help', 'lazy', 'snacks_dashboard' },
                 },
                 whitespace = {
                     highlight = { 'LineNr' },

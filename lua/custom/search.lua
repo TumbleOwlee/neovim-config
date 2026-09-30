@@ -29,8 +29,13 @@ local M = {}
 -- Search pattern by folding non-matching lines
 function M.search_pattern()
     local pattern = vim.fn.input('Pattern: ')
-    vim.o.foldmethod = 'expr'
-    vim.o.foldexpr = "getline(v:lnum)!~'" .. pattern .. "'"
+    if pattern == '' then
+        return
+    end
+    -- Pattern is read from a window variable, so it needs no escaping
+    vim.w.search_pattern = pattern
+    vim.wo.foldmethod = 'expr'
+    vim.wo.foldexpr = 'getline(v:lnum) !~ w:search_pattern'
 end
 
 return M

@@ -1,10 +1,10 @@
+-- Highlight color codes in their color
 return {
     {
-        'norcalli/nvim-colorizer.lua',
-        config = function()
-            require('colorizer').setup({
-                '*',
-            })
-        end,
+        'catgoose/nvim-colorizer.lua',
+        event = { 'BufReadPost', 'BufNewFile' },
+        opts = {
+            filetypes = { '*' },
+        },
     },
 }

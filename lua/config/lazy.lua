@@ -12,20 +12,31 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 -- Remap space as leader key
-vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
+vim.keymap.set({ 'n', 'x' }, '<Space>', '<Nop>', { silent = true })
 
--- Configure leader key
+-- Configure leader key (before lazy so plugin keys use it)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-
-vim.o.termguicolors = true
 
 -- Setup lazy
 require('lazy').setup({
     spec = {
         { import = 'plugins' },
     },
-    checker = { enabled = true },
+    -- Plugins load on their event/cmd/keys/ft trigger unless marked `lazy = false`
+    defaults = { lazy = true },
+    install = { colorscheme = { 'vague', 'habamax' } },
+    checker = { enabled = true, notify = false },
+    change_detection = { notify = false },
+    performance = {
+        rtp = {
+            disabled_plugins = { 'gzip', 'netrwPlugin', 'tarPlugin', 'tohtml', 'tutor', 'zipPlugin' },
+        },
+    },
 })
 
-vim.api.nvim_create_user_command('SyncInstall', 'Lazy update', { desc = 'Install all plugins synchronously!' })
+-- Uses the Lua API: with a UI attached the :Lazy command only exists after VeryLazy,
+-- which is too late for `nvim +SyncInstall +qall` (CI)
+vim.api.nvim_create_user_command('SyncInstall', function()
+    require('lazy').sync({ wait = true, show = false })
+end, { desc = 'Install all plugins synchronously!' })
