@@ -796,7 +796,14 @@ vim.api.nvim_create_user_command('Comments', M.list, { desc = 'List review comme
 -- User commands must be capitalized, so expand the lowercase spelling on the command line
 for _, name in ipairs({ 'review', 'comments' }) do
     local cmd = name:sub(1, 1):upper() .. name:sub(2)
-    vim.cmd(([[cnoreabbrev <expr> %s getcmdtype() ==# ':' && getcmdline() ==# '%s' ? '%s' : '%s']]):format(name, name, cmd, name))
+    vim.cmd(
+        ([[cnoreabbrev <expr> %s getcmdtype() ==# ':' && getcmdline() ==# '%s' ? '%s' : '%s']]):format(
+            name,
+            name,
+            cmd,
+            name
+        )
+    )
 end
 
 local map = vim.keymap.set

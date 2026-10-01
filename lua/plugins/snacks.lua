@@ -5,17 +5,84 @@ return {
         lazy = false,
         keys = {
             -- Pickers
-            { '<leader><Space>', function() Snacks.picker.buffers() end, desc = 'List buffers' },
-            { '<leader>ff', function() Snacks.picker.files() end, desc = 'Find files' },
-            { '<leader>fg', function() Snacks.picker.grep() end, desc = 'Live grep' },
-            { '<leader>fw', function() Snacks.picker.grep_word() end, desc = 'Grep word', mode = { 'n', 'x' } },
-            { '<leader>fz', function() Snacks.picker.lines() end, desc = 'Fuzzy find in buffer' },
-            { '<leader>fr', function() Snacks.picker.recent() end, desc = 'Recent files' },
-            { '<leader>fm', function() Snacks.picker.marks() end, desc = 'Marks' },
-            { '<leader>fh', function() Snacks.picker.help() end, desc = 'Help tags' },
-            { '<leader>ft', function() Snacks.picker.tags() end, desc = 'Tags' },
-            { '<leader>fk', function() Snacks.picker.keymaps() end, desc = 'Keymaps' },
-            { '<leader>fp', function() Snacks.picker.resume() end, desc = 'Resume last picker' },
+            {
+                '<leader><Space>',
+                function()
+                    Snacks.picker.buffers()
+                end,
+                desc = 'List buffers',
+            },
+            {
+                '<leader>ff',
+                function()
+                    Snacks.picker.files()
+                end,
+                desc = 'Find files',
+            },
+            {
+                '<leader>fg',
+                function()
+                    Snacks.picker.grep()
+                end,
+                desc = 'Live grep',
+            },
+            {
+                '<leader>fw',
+                function()
+                    Snacks.picker.grep_word()
+                end,
+                desc = 'Grep word',
+                mode = { 'n', 'x' },
+            },
+            {
+                '<leader>fz',
+                function()
+                    Snacks.picker.lines()
+                end,
+                desc = 'Fuzzy find in buffer',
+            },
+            {
+                '<leader>fr',
+                function()
+                    Snacks.picker.recent()
+                end,
+                desc = 'Recent files',
+            },
+            {
+                '<leader>fm',
+                function()
+                    Snacks.picker.marks()
+                end,
+                desc = 'Marks',
+            },
+            {
+                '<leader>fh',
+                function()
+                    Snacks.picker.help()
+                end,
+                desc = 'Help tags',
+            },
+            {
+                '<leader>ft',
+                function()
+                    Snacks.picker.tags()
+                end,
+                desc = 'Tags',
+            },
+            {
+                '<leader>fk',
+                function()
+                    Snacks.picker.keymaps()
+                end,
+                desc = 'Keymaps',
+            },
+            {
+                '<leader>fp',
+                function()
+                    Snacks.picker.resume()
+                end,
+                desc = 'Resume last picker',
+            },
             {
                 '<A-w>',
                 function()
@@ -24,13 +91,22 @@ return {
                 desc = 'Show functions',
             },
             -- Explorer
-            { '<leader>e', function() Snacks.explorer() end, desc = 'Toggle file explorer' },
+            {
+                '<leader>e',
+                function()
+                    Snacks.explorer()
+                end,
+                desc = 'Toggle file explorer',
+            },
             {
                 '<A-d>',
                 function()
                     local tmux = Snacks.terminal.get('tmux', { create = false })
                     require('custom.terminals').hide_others(tmux)
-                    Snacks.terminal.toggle('tmux', { win = { position = 'float', width = 0.9, height = 0.9, border = 'rounded' } })
+                    Snacks.terminal.toggle(
+                        'tmux',
+                        { win = { position = 'float', width = 0.9, height = 0.9, border = 'rounded' } }
+                    )
                 end,
                 mode = { 'n', 't' },
                 desc = 'Toggle terminal',

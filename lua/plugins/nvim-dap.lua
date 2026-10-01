@@ -30,18 +30,38 @@ return {
         'mfussenegger/nvim-dap',
         keys = {
             -- Quick access without leader
-            { '<A-b>', dap(function(d) d.toggle_breakpoint() end), desc = 'Debug: toggle breakpoint' },
-            { '<A-r>', dap(function(d) if not d.session() then d.continue() end end), desc = 'Debug: start session' },
-            { '<A-c>', dap(function(d) d.continue() end, true), desc = 'Debug: continue' },
-            { '<A-n>', dap(function(d) d.step_over() end, true), desc = 'Debug: step over' },
-            { '<A-s>', dap(function(d) d.step_into() end, true), desc = 'Debug: step into' },
+            { '<A-b>', dap(function(d)
+                d.toggle_breakpoint()
+            end), desc = 'Debug: toggle breakpoint' },
+            { '<A-r>', dap(function(d)
+                if not d.session() then
+                    d.continue()
+                end
+            end), desc = 'Debug: start session' },
+            { '<A-c>', dap(function(d)
+                d.continue()
+            end, true), desc = 'Debug: continue' },
+            { '<A-n>', dap(function(d)
+                d.step_over()
+            end, true), desc = 'Debug: step over' },
+            { '<A-s>', dap(function(d)
+                d.step_into()
+            end, true), desc = 'Debug: step into' },
             { '<A-f>', show('frames'), desc = 'Debug: show frames' },
             { '<A-l>', show('scopes'), desc = 'Debug: show locals' },
-            { '<A-p>', dap(function(d) d.repl.toggle() end), desc = 'Debug: toggle REPL' },
+            { '<A-p>', dap(function(d)
+                d.repl.toggle()
+            end), desc = 'Debug: toggle REPL' },
             -- Full set under <leader>d
-            { '<leader>db', dap(function(d) d.toggle_breakpoint() end), desc = 'Toggle breakpoint' },
-            { '<leader>dB', dap(function(d) d.clear_breakpoints() end), desc = 'Clear all breakpoints' },
-            { '<leader>dc', dap(function(d) d.continue() end), desc = 'Continue / start' },
+            { '<leader>db', dap(function(d)
+                d.toggle_breakpoint()
+            end), desc = 'Toggle breakpoint' },
+            { '<leader>dB', dap(function(d)
+                d.clear_breakpoints()
+            end), desc = 'Clear all breakpoints' },
+            { '<leader>dc', dap(function(d)
+                d.continue()
+            end), desc = 'Continue / start' },
             {
                 '<leader>dr',
                 dap(function(d)
@@ -52,19 +72,41 @@ return {
                 end),
                 desc = 'Restart session',
             },
-            { '<leader>dt', dap(function(d) d.terminate() end, true), desc = 'Terminate' },
-            { '<leader>dn', dap(function(d) d.step_over() end, true), desc = 'Step over' },
-            { '<leader>di', dap(function(d) d.step_into() end, true), desc = 'Step into' },
-            { '<leader>do', dap(function(d) d.step_out() end, true), desc = 'Step out' },
-            { '<leader>dk', dap(function(d) d.step_back() end, true), desc = 'Step back' },
-            { '<leader>dK', dap(function(d) d.reverse_continue() end, true), desc = 'Reverse continue' },
-            { '<leader>dg', dap(function(d) d.run_to_cursor() end), desc = 'Run to cursor' },
-            { '<leader>dp', dap(function(d) d.pause() end, true), desc = 'Pause thread' },
-            { '<leader>du', dap(function(d) d.up() end, true), desc = 'Go up in stacktrace' },
-            { '<leader>dd', dap(function(d) d.down() end, true), desc = 'Go down in stacktrace' },
+            { '<leader>dt', dap(function(d)
+                d.terminate()
+            end, true), desc = 'Terminate' },
+            { '<leader>dn', dap(function(d)
+                d.step_over()
+            end, true), desc = 'Step over' },
+            { '<leader>di', dap(function(d)
+                d.step_into()
+            end, true), desc = 'Step into' },
+            { '<leader>do', dap(function(d)
+                d.step_out()
+            end, true), desc = 'Step out' },
+            { '<leader>dk', dap(function(d)
+                d.step_back()
+            end, true), desc = 'Step back' },
+            { '<leader>dK', dap(function(d)
+                d.reverse_continue()
+            end, true), desc = 'Reverse continue' },
+            { '<leader>dg', dap(function(d)
+                d.run_to_cursor()
+            end), desc = 'Run to cursor' },
+            { '<leader>dp', dap(function(d)
+                d.pause()
+            end, true), desc = 'Pause thread' },
+            { '<leader>du', dap(function(d)
+                d.up()
+            end, true), desc = 'Go up in stacktrace' },
+            { '<leader>dd', dap(function(d)
+                d.down()
+            end, true), desc = 'Go down in stacktrace' },
             { '<leader>df', show('frames'), desc = 'Show frames' },
             { '<leader>ds', show('scopes'), desc = 'Show scopes' },
-            { '<leader>dR', dap(function(d) d.repl.toggle() end), desc = 'Toggle REPL console' },
+            { '<leader>dR', dap(function(d)
+                d.repl.toggle()
+            end), desc = 'Toggle REPL console' },
             {
                 '<leader>dv',
                 dap(function()

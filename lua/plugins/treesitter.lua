@@ -110,7 +110,12 @@ return {
             { 'if', sel('@function.inner'), mode = { 'x', 'o' }, desc = 'Inside function' },
             { 'ac', sel('@class.outer'), mode = { 'x', 'o' }, desc = 'Around class' },
             { 'ic', sel('@class.inner'), mode = { 'x', 'o' }, desc = 'Inside class' },
-            { ']m', move('goto_next_start', '@function.outer'), mode = { 'n', 'x', 'o' }, desc = 'Next function start' },
+            {
+                ']m',
+                move('goto_next_start', '@function.outer'),
+                mode = { 'n', 'x', 'o' },
+                desc = 'Next function start',
+            },
             { ']]', move('goto_next_start', '@class.outer'), mode = { 'n', 'x', 'o' }, desc = 'Next class start' },
             { ']M', move('goto_next_end', '@function.outer'), mode = { 'n', 'x', 'o' }, desc = 'Next function end' },
             { '][', move('goto_next_end', '@class.outer'), mode = { 'n', 'x', 'o' }, desc = 'Next class end' },
