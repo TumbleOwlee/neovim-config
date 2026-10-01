@@ -1,4 +1,4 @@
--- Code review sessions on top of unified.nvim: comment on diff lines, then send the review to Claude Code
+-- Code review sessions on top of unified.nvim: comment on diff lines, then send the review to Claude Code or Copilot Chat
 local M = {}
 
 local ns = vim.api.nvim_create_namespace('review')
@@ -261,8 +261,8 @@ local function panel_buf()
             end
         end,
     })
-    -- Closing a float (e.g. Claude Code) returns to the window it was opened from. As the panel
-    -- saves when left, there is nothing to continue there, so go back to the code instead
+    -- Closing a float (e.g. Claude Code) or Copilot Chat returns to the window it was opened from. As
+    -- the panel saves when left, there is nothing to continue there, so go back to the code instead
     vim.api.nvim_create_autocmd('WinEnter', {
         group = group,
         buffer = p.buf,
@@ -272,7 +272,8 @@ local function panel_buf()
                 return
             end
             local is_float = vim.api.nvim_win_get_config(from).relative ~= ''
-            if is_float or vim.bo[vim.api.nvim_win_get_buf(from)].buftype == 'terminal' then
+            local from_buf = vim.api.nvim_win_get_buf(from)
+            if is_float or vim.bo[from_buf].buftype == 'terminal' or vim.bo[from_buf].filetype == 'copilot-chat' then
                 vim.schedule(function()
                     if vim.api.nvim_win_is_valid(code) then
                         vim.api.nvim_set_current_win(code)
@@ -618,9 +619,43 @@ local function format_review(list)
     return table.concat(lines, '\n')
 end
 
--- Paste all unsent comments into the Claude Code prompt without submitting it
-function M.send()
+-- Targets a review can be sent to; `send` pastes the review into the prompt without submitting it and
+-- returns whether that worked
+local targets = {
+    claude = {
+        name = 'Claude Code',
+        send = function(text)
+            require('custom.terminals').hide(Snacks.terminal.get('tmux', { create = false }))
+            local ok, terminal = pcall(require, 'claudecode.terminal')
+            return ok and terminal.send_to_terminal(text, { submit = false, focus = true })
+        end,
+    },
+    copilot = {
+        name = 'Copilot Chat',
+        send = function(text)
+            local ok, chat = pcall(require, 'CopilotChat')
+            if not ok then
+                return false
+            end
+            chat.open()
+            -- Append to the prompt being written, so text already typed there is kept
+            local prompt = chat.chat:get_message('user')
+            local typed = prompt and vim.trim(prompt.content) ~= ''
+            chat.chat:add_message({ role = 'user', content = (typed and '\n\n' or '') .. text })
+            chat.chat:follow()
+            return true
+        end,
+    },
+}
+
+-- Paste all unsent comments into the prompt of Claude Code (default) or Copilot Chat without submitting it
+function M.send(target)
     if not require_active() then
+        return
+    end
+    local t = targets[target or 'claude']
+    if not t then
+        notify(('Unknown review target %s, use claude or copilot'):format(target), vim.log.levels.ERROR)
         return
     end
     local list = vim.tbl_filter(function(c)
@@ -632,17 +667,15 @@ function M.send()
     end
     local text = format_review(list)
 
-    require('custom.terminals').hide(Snacks.terminal.get('tmux', { create = false }))
-    local ok, terminal = pcall(require, 'claudecode.terminal')
-    if ok and terminal.send_to_terminal(text, { submit = false, focus = true }) then
+    if t.send(text) then
         for _, c in ipairs(list) do
             c.sent = true
             place(c, c.buf)
         end
-        notify(('Sent %d comment(s) to Claude Code'):format(#list))
+        notify(('Sent %d comment(s) to %s'):format(#list, t.name))
     else
         vim.fn.setreg('+', text)
-        notify('Claude Code is not running, review copied to the clipboard instead', vim.log.levels.WARN)
+        notify(('%s is not running, review copied to the clipboard instead'):format(t.name), vim.log.levels.WARN)
     end
 end
 
@@ -784,18 +817,20 @@ end
 vim.api.nvim_create_user_command('Review', function(opts)
     if opts.args == 'end' then
         M.stop()
-    elseif opts.args == 'send' then
-        M.send()
+    elseif opts.fargs[1] == 'send' then
+        M.send(opts.fargs[2])
     else
         M.start(opts.args)
     end
 end, {
     nargs = '*',
-    desc = 'Start a review (optionally naming the base ref), or `end` / `send` it',
-    complete = function(lead)
+    desc = 'Start a review (optionally naming the base ref), or `end` / `send [claude|copilot]` it',
+    complete = function(lead, line)
+        local candidates = line:match('^%s*%a+!?%s+send%s') and vim.tbl_keys(targets)
+            or { 'end', 'send', 'HEAD', 'HEAD~1' }
         return vim.tbl_filter(function(s)
             return s:sub(1, #lead) == lead
-        end, { 'end', 'send', 'HEAD', 'HEAD~1' })
+        end, candidates)
     end,
 })
 vim.api.nvim_create_user_command('Comments', M.list, { desc = 'List review comments' })
@@ -821,5 +856,8 @@ map('n', '<leader>re', M.edit, { desc = 'Edit comment' })
 map('n', '<leader>rd', M.delete, { desc = 'Delete comment' })
 map('n', '<leader>rl', M.list, { desc = 'List comments' })
 map('n', '<leader>rs', M.send, { desc = 'Send review to Claude Code' })
+map('n', '<leader>rp', function()
+    M.send('copilot')
+end, { desc = 'Send review to Copilot Chat' })
 
 return M
