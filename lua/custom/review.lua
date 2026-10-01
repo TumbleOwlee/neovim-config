@@ -7,7 +7,7 @@ local group = vim.api.nvim_create_augroup('review', { clear = true })
 
 vim.api.nvim_set_hl(0, 'ReviewComment', { link = 'DiagnosticVirtualTextInfo', default = true })
 vim.api.nvim_set_hl(0, 'ReviewCommentSent', { link = 'Comment', default = true })
-vim.api.nvim_set_hl(0, 'ReviewHeader', { link = 'Title', default = true })
+vim.api.nvim_set_hl(0, 'ReviewHeader', { link = 'DiagnosticError', default = true })
 
 local state = {
     active = false,
@@ -734,21 +734,7 @@ function M.start(args)
     notify(('Review started against %s, comment with <leader>rc'):format(commit_base()))
 end
 
-function M.stop()
-    if not state.active then
-        notify('No review running')
-        return
-    end
-    local unsent = #vim.tbl_filter(function(c)
-        return not c.sent
-    end, vim.tbl_values(state.comments))
-    if unsent > 0 then
-        local msg = ('%d unsent comment(s) will be discarded. End the review?'):format(unsent)
-        if vim.fn.confirm(msg, '&Yes\n&No', 2) ~= 1 then
-            return
-        end
-    end
-
+local function teardown()
     local p = state.panel
     p.new = nil
     if p.buf and vim.api.nvim_buf_is_valid(p.buf) then
@@ -768,6 +754,27 @@ function M.stop()
     state.base = nil
     state.panel = { buf = nil, win = nil, ids = {}, new = nil }
     state.code_win, state.left_win = nil, nil
+end
+
+function M.stop()
+    if not state.active then
+        notify('No review running')
+        return
+    end
+    local unsent = #vim.tbl_filter(function(c)
+        return not c.sent
+    end, vim.tbl_values(state.comments))
+    if unsent == 0 then
+        teardown()
+        return
+    end
+    -- Not confirm(), as noice shows a repeated confirm() message as a bare prompt without the question
+    local prompt = ('%d unsent comment(s) will be discarded. End the review?'):format(unsent)
+    vim.ui.select({ 'No', 'Yes' }, { prompt = prompt }, function(choice)
+        if choice == 'Yes' and state.active then
+            teardown()
+        end
+    end)
 end
 
 ------------------------------------------------------------------------------------------------------------------------
