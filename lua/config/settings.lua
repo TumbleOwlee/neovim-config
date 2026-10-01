@@ -50,6 +50,8 @@ opt.completeopt = 'menu,menuone,noselect'
 vim.api.nvim_create_autocmd('TextYankPost', {
     group = vim.api.nvim_create_augroup('YankHighlight', { clear = true }),
     callback = function()
-        vim.hl.hl_op()
+        -- vim.hl.hl_op replaces the deprecated vim.hl.on_yank in newer Neovim versions
+        local hl_op = vim.hl.hl_op or vim.hl.on_yank
+        hl_op()
     end,
 })

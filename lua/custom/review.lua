@@ -9,6 +9,24 @@ vim.api.nvim_set_hl(0, 'ReviewComment', { link = 'DiagnosticVirtualTextInfo', de
 vim.api.nvim_set_hl(0, 'ReviewCommentSent', { link = 'Comment', default = true })
 vim.api.nvim_set_hl(0, 'ReviewHeader', { link = 'DiagnosticError', default = true })
 
+-- Line numbers of commented lines on a background in the colorscheme's error color, recomputed when it changes
+local function set_gutter_hl()
+    local function color(name, attr)
+        return vim.api.nvim_get_hl(0, { name = name, link = false })[attr]
+    end
+    vim.api.nvim_set_hl(0, 'ReviewGutter', {
+        fg = color('Normal', 'bg') or 0x1e1e1e,
+        bg = color('DiagnosticError', 'fg') or 0xe06c75,
+        bold = true,
+        default = true,
+    })
+end
+set_gutter_hl()
+vim.api.nvim_create_autocmd('ColorScheme', {
+    group = vim.api.nvim_create_augroup('review.colors', { clear = true }),
+    callback = set_gutter_hl,
+})
+
 local state = {
     active = false,
     comments = {}, -- id -> { id, file, lnum, end_lnum, text, excerpt, sent, buf, mark }
@@ -112,8 +130,8 @@ local function text_width(buf)
     return vim.api.nvim_win_get_width(win) - vim.fn.getwininfo(win)[1].textoff
 end
 
--- (Re)place the extmarks of a comment: one tracks the commented lines as they move with edits,
--- the other shows the comment below the last of them
+-- (Re)place the extmarks of a comment: one tracks the commented lines as they move with edits and
+-- marks their line numbers, the other shows the comment below the last of them
 local function place(c, buf)
     if c.buf and vim.api.nvim_buf_is_valid(c.buf) then
         for _, id in ipairs({ c.mark, c.box }) do
@@ -127,7 +145,13 @@ local function place(c, buf)
     local count = vim.api.nvim_buf_line_count(buf)
     local last = math.min(c.end_lnum, count) - 1
     c.buf = buf
-    c.mark = vim.api.nvim_buf_set_extmark(buf, ns, math.min(c.lnum, count) - 1, 0, { end_row = last })
+    c.mark = vim.api.nvim_buf_set_extmark(
+        buf,
+        ns,
+        math.min(c.lnum, count) - 1,
+        0,
+        { end_row = last, number_hl_group = 'ReviewGutter' }
+    )
     c.box = vim.api.nvim_buf_set_extmark(buf, ns, last, 0, { virt_lines = comment_box(c, text_width(buf)) })
 end
 
