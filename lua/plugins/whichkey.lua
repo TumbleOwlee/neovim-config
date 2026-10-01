@@ -25,6 +25,7 @@ return {
                     { '<leader>o', group = 'Overseer' },
                     { '<leader>p', group = 'Neovim' },
                     { '<leader>q', group = 'Quickfix / Diagnostics' },
+                    { '<leader>r', group = 'Review' },
                     { '<leader>s', group = 'Session' },
                     { '<leader><Tab>', group = 'Tabs' },
                     { '<A-u>', group = 'Unified diff' },
