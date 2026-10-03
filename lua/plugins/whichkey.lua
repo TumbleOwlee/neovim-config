@@ -12,7 +12,7 @@ return {
                 -- Groups
                 {
                     { '<leader>a', group = 'Claude Code' },
-                    { '<leader>b', group = 'Buffer' },
+                    { '<leader>b', group = 'Buffer / Board' },
                     { '<leader>C', group = 'Copilot Chat' },
                     { '<leader>c', group = 'Code' },
                     { '<leader>d', group = 'Debug' },

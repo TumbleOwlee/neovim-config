@@ -46,8 +46,10 @@ local function is_file_buf(buf)
     return vim.bo[buf].buftype == '' and vim.api.nvim_buf_get_name(buf) ~= ''
 end
 
+-- Paths are relative to the directory nvim was started in, where Claude Code runs as well: the tab of a worktree
+-- under review has a working directory of its own
 local function location(file, first, last)
-    local path = vim.fn.fnamemodify(file, ':.')
+    local path = vim.fs.relpath(vim.fn.getcwd(-1, -1), file) or vim.fn.fnamemodify(file, ':~')
     return first == last and ('%s:%d'):format(path, first) or ('%s:%d-%d'):format(path, first, last)
 end
 
@@ -604,28 +606,41 @@ function M.list()
     })
 end
 
-local function format_review(list)
-    local base = commit_base()
-    local hash = git({ 'rev-parse', '--short', base }) or base
-    local subject = git({ 'log', '-1', '--format=%s', base }) or ''
-    local head = git({ 'rev-parse', '--short', 'HEAD' }) or 'HEAD'
-    local base_desc = hash == base and hash or ('%s (%s)'):format(base, hash)
-    if subject ~= '' then
-        base_desc = ('%s "%s"'):format(base_desc, subject)
-    end
+-- Whether the comment is on lines of a diff, else on plain lines of a file
+local function on_diff(c)
+    return vim.iter(c.excerpt):any(function(line)
+        return line:match('^[+-]') ~= nil
+    end)
+end
 
-    local lines = {
-        ('Code review of the working tree changes against %s, HEAD is %s.'):format(base_desc, head),
-        'Line numbers refer to the current working tree files. Please address each comment:',
-    }
+local function format_review(list)
+    local lines
+    local diffed = vim.iter(list):find(on_diff)
+    if diffed or unified_active() then
+        -- The repository of the commented files, which is a worktree's when one is under review
+        local cwd = git({ 'rev-parse', '--show-toplevel' }, vim.fn.fnamemodify((diffed or list[1]).file, ':h'))
+        local base = commit_base()
+        local hash = git({ 'rev-parse', '--short', base }, cwd) or base
+        local subject = git({ 'log', '-1', '--format=%s', base }, cwd) or ''
+        local head = git({ 'rev-parse', '--short', 'HEAD' }, cwd) or 'HEAD'
+        local base_desc = hash == base and hash or ('%s (%s)'):format(base, hash)
+        if subject ~= '' then
+            base_desc = ('%s "%s"'):format(base_desc, subject)
+        end
+        lines = {
+            ('Code review of the working tree changes against %s, HEAD is %s.'):format(base_desc, head),
+            'Line numbers refer to the current working tree files. Please address each comment:',
+        }
+    else
+        lines =
+            { 'Review of the files below, line numbers refer to their current content. Please address each comment:' }
+    end
     for i, c in ipairs(list) do
         table.insert(lines, '')
         table.insert(lines, ('%d. %s'):format(i, location(c.file, c.lnum, c.end_lnum)))
         if #c.excerpt > 0 then
             -- Lines commented outside of a diff are plain code
-            local is_diff = vim.iter(c.excerpt):any(function(line)
-                return line:match('^[+-]') ~= nil
-            end)
+            local is_diff = on_diff(c)
             table.insert(lines, '   ```' .. (is_diff and 'diff' or c.ft or ''))
             for j, line in ipairs(c.excerpt) do
                 if j > 40 then

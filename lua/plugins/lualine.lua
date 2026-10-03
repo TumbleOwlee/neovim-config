@@ -25,6 +25,25 @@ return {
                             return require('custom.review').status_color()
                         end,
                     },
+                    {
+                        function()
+                            return require('custom.board').approval_status()
+                        end,
+                        cond = function()
+                            return require('custom.board').has_approval()
+                        end,
+                        color = function()
+                            return require('custom.review').status_color()
+                        end,
+                    },
+                    {
+                        function()
+                            return require('custom.board').status()
+                        end,
+                        cond = function()
+                            return require('custom.board').has_cards()
+                        end,
+                    },
                     'lsp_status',
                     'filetype',
                 },
