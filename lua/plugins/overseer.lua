@@ -189,8 +189,10 @@ return {
             })
             vim.api.nvim_create_user_command('Grep', function(params)
                 local args = vim.fn.expandcmd(params.args)
-                -- Insert args at the '$*' in the grepprg
-                local cmd, num_subs = vim.o.grepprg:gsub('%$%*', args)
+                -- Insert args at the '$*' in the grepprg, as is: a replacement string would treat `%` as special
+                local cmd, num_subs = vim.o.grepprg:gsub('%$%*', function()
+                    return args
+                end)
                 if num_subs == 0 then
                     cmd = cmd .. ' ' .. args
                 end
@@ -218,11 +220,13 @@ return {
                     },
                 })
                 task:start()
-            end, { nargs = '*', bang = true, bar = true, complete = 'file' })
+            end, { nargs = '*', bang = true, complete = 'file' })
 
             vim.api.nvim_create_user_command('Make', function(params)
-                -- Insert args at the '$*' in the makeprg
-                local cmd, num_subs = vim.o.makeprg:gsub('%$%*', params.args)
+                -- Insert args at the '$*' in the makeprg, as is: a replacement string would treat `%` as special
+                local cmd, num_subs = vim.o.makeprg:gsub('%$%*', function()
+                    return params.args
+                end)
                 if num_subs == 0 then
                     cmd = cmd .. ' ' .. params.args
                 end

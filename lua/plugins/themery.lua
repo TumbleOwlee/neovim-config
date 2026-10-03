@@ -32,10 +32,6 @@ return {
             require('themery').setup({
                 themes = themes,
                 livePreview = true,
-                globalAfter = [[
-                    vim.opt.background = "dark"
-                    vim.cmd("highlight Normal guibg=none")
-                ]],
             })
         end,
     },

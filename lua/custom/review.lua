@@ -686,9 +686,10 @@ local targets = {
                 return false
             end
             chat.open()
-            -- Append to the prompt being written, so text already typed there is kept
-            local prompt = chat.chat:get_message('user')
-            local typed = prompt and vim.trim(prompt.content) ~= ''
+            -- Append to the prompt being written, so text already typed there is kept. Only the last message is
+            -- that prompt, an earlier user message was answered already
+            local last = chat.chat:get_message()
+            local typed = last and last.role == 'user' and vim.trim(last.content) ~= ''
             chat.chat:add_message({ role = 'user', content = (typed and '\n\n' or '') .. text })
             chat.chat:follow()
             return true

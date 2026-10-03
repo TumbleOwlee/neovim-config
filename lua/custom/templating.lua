@@ -26,7 +26,7 @@ vim.api.nvim_create_autocmd('BufRead', {
         end
 
         -- Only touch lines that actually contain a placeholder
-        local first_line
+        local first_line, replaced
         for nr, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, true)) do
             local new = line
             for key, value in pairs(config) do
@@ -34,11 +34,13 @@ vim.api.nvim_create_autocmd('BufRead', {
             end
             if new ~= line then
                 vim.api.nvim_buf_set_lines(buf, nr - 1, nr, true, { new })
+                replaced = true
             end
             first_line = first_line or new
         end
 
-        if first_line and buf == vim.api.nvim_get_current_buf() then
+        -- A file without placeholders keeps its cursor position
+        if replaced and buf == vim.api.nvim_get_current_buf() then
             vim.api.nvim_win_set_cursor(0, { 1, #first_line })
         end
     end,

@@ -53,10 +53,18 @@ local function branch_point(wt, main)
     return base and git({ 'rev-parse', '--short', base }, wt.path), target
 end
 
+-- Whether the file lies below the directory. Both are compared with symbolic links resolved, as git resolves them
+-- in the paths of the worktrees, while a buffer is named by the path it was opened with
+local function is_below(file, dir)
+    file = vim.uv.fs_realpath(file) or file
+    dir = vim.uv.fs_realpath(dir) or dir
+    return vim.startswith(file, dir .. '/')
+end
+
 -- Whether the file belongs to a worktree opened for review
 function M.is_reviewed(file)
     for path in pairs(reviewed) do
-        if vim.startswith(file, path .. '/') then
+        if is_below(file, path) then
             return true
         end
     end
@@ -66,7 +74,7 @@ end
 -- Loaded buffers of the files below a worktree
 local function buffers_in(path)
     return vim.tbl_filter(function(buf)
-        return vim.api.nvim_buf_is_loaded(buf) and vim.startswith(vim.api.nvim_buf_get_name(buf), path .. '/')
+        return vim.api.nvim_buf_is_loaded(buf) and is_below(vim.api.nvim_buf_get_name(buf), path)
     end, vim.api.nvim_list_bufs())
 end
 
