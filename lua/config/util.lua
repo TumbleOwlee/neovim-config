@@ -4,9 +4,12 @@ function Util.abort(msg, context)
     vim.api.nvim_echo({
         { msg .. '\n', 'ErrorMsg' },
         { context, 'WarningMsg' },
-        { '\nPress any key to exit...' },
+        { #vim.api.nvim_list_uis() > 0 and '\nPress any key to exit...' or '' },
     }, true, {})
-    vim.fn.getchar()
+    -- Without a UI (headless, CI) there is nobody to press a key
+    if #vim.api.nvim_list_uis() > 0 then
+        vim.fn.getchar()
+    end
     os.exit(1)
 end
 

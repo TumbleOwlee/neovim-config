@@ -29,12 +29,16 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 
 local state = {
     active = false,
-    comments = {}, -- id -> { id, file, lnum, end_lnum, text, excerpt, sent, buf, mark }
+    -- id -> { id, file, lnum, end_lnum, text, excerpt, sent, buf, mark, root, base }, `root` being the top level of
+    -- the file's repository and `base` the commit its excerpt is diffed against
+    comments = {},
     next_id = 1,
     base = nil, -- ref given to :Review
-    -- Bottom panel; `ids` are the comments it shows, `new` the pending comment while one is written
-    panel = { buf = nil, win = nil, ids = {}, new = nil },
+    -- Bottom panel; `ids` are the comments it shows, `new` the pending comment while one is written, `tags` the
+    -- section tags (`#id`, `new`) by the extmark of their header line
+    panel = { buf = nil, win = nil, ids = {}, new = nil, tags = {} },
     code_win = nil, -- the window last used for reviewing code
+    dismissed = nil, -- { buf, lnum } of the line whose comments were closed with `q`, not shown again until left
     left_win = nil, -- the window focus last left
 }
 
@@ -63,27 +67,33 @@ local function unified_active()
     return ustate ~= nil and ustate.is_active(), ustate
 end
 
--- The base of the unified diff, so excerpts match the diff on screen (:Review <ref> moves unified to it), else
--- the ref given to :Review, else HEAD
+-- The base of the unified diff in the current tab, so excerpts match the diff on screen (:Review <ref> moves unified
+-- to it). Every tab has a diff of its own, see custom.unified_tabs
 local function unified_base()
-    local active, ustate = unified_active()
-    local ok, base = pcall(function()
-        return active and ustate.get_commit_base()
-    end)
-    return ok and base or nil
+    return require('custom.unified_tabs').base()
 end
 
+-- The base of the unified diff, else the ref given to :Review, else HEAD
 local function commit_base()
     return unified_base() or state.base or 'HEAD'
 end
 
 -- Run git, returning its trimmed output (or the raw output with `raw`), or nil when it fails
+-- or when the directory does not exist (e.g. the one of a new file)
 local function git(args, cwd, raw)
-    local res = vim.system(vim.list_extend({ 'git' }, args), { text = true, cwd = cwd }):wait()
-    if res.code ~= 0 then
+    local ok, res = pcall(function()
+        return vim.system(vim.list_extend({ 'git' }, args), { text = true, cwd = cwd }):wait()
+    end)
+    if not (ok and res.code == 0) then
         return nil
     end
     return raw and res.stdout or vim.trim(res.stdout)
+end
+
+-- The top level of the repository of a file or directory, nil outside of one
+local function repo_root(path)
+    local dir = vim.fn.isdirectory(path) == 1 and path or vim.fn.fnamemodify(path, ':h')
+    return git({ 'rev-parse', '--show-toplevel' }, dir)
 end
 
 -- Refresh a comment's line range from its extmark, which follows edits to the buffer
@@ -200,11 +210,11 @@ local function comments_at(buf, lnum)
     return list
 end
 
--- The buffer's diff against the base of the review as { added = { [lnum] = true }, deleted = { [lnum] = lines } },
--- where deleted lines are shown above buffer line `lnum`, or nil when unified shows no diff for it
-local function buffer_diff(buf)
+-- The buffer's diff against `base` as { added = { [lnum] = true }, deleted = { [lnum] = lines } }, where deleted
+-- lines are shown above buffer line `lnum`, or nil when unified shows no diff for it (unless `always`)
+local function buffer_diff(buf, base, always)
     local udiff = package.loaded['unified.diff']
-    if not (unified_active() and udiff and udiff.is_diff_displayed(buf)) then
+    if not (always or (unified_active() and udiff and udiff.is_diff_displayed(buf))) then
         return nil
     end
     local file = vim.api.nvim_buf_get_name(buf)
@@ -215,7 +225,7 @@ local function buffer_diff(buf)
         return nil
     end
     -- A file that does not exist in the base commit is entirely added
-    local old = git({ 'show', commit_base() .. ':' .. path }, root, true) or ''
+    local old = git({ 'show', base .. ':' .. path }, root, true) or ''
     local new = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n') .. '\n'
     local old_lines = vim.split(old, '\n')
 
@@ -234,10 +244,10 @@ local function buffer_diff(buf)
     return { added = added, deleted = deleted }
 end
 
--- Selected lines as a diff fragment when a diff is shown, including the deleted lines within the
+-- Selected lines as a diff fragment when a diff is shown (or with `always`), including the deleted lines within the
 -- selection and directly below it, as the deleted block attaches to the line after it
-local function excerpt(buf, first, last)
-    local diff = buffer_diff(buf)
+local function excerpt(buf, first, last, base, always)
+    local diff = buffer_diff(buf, base, always)
     local lines = {}
     local function add_deleted(lnum)
         for _, line in ipairs(diff and diff.deleted[lnum] or {}) do
@@ -253,12 +263,32 @@ local function excerpt(buf, first, last)
     return lines
 end
 
+-- Whether the comment is on lines of a diff, else on plain lines of a file
+local function on_diff(c)
+    return vim.iter(c.excerpt):any(function(line)
+        return line:match('^[+-]') ~= nil
+    end)
+end
+
+-- Take the excerpt of the comment anew, as the commented lines may have changed since it was written. A comment on
+-- a diff keeps its +/- lines even when the diff is not shown anymore
+local function update_excerpt(c)
+    if c.buf and vim.api.nvim_buf_is_loaded(c.buf) then
+        sync(c)
+        c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum, c.base, on_diff(c))
+    end
+end
+
 ------------------------------------------------------------------------------------------------------------------------
 -- Comment panel
 ------------------------------------------------------------------------------------------------------------------------
 
+-- Whether the panel is open in the current tab
 local function panel_open()
-    return state.panel.win ~= nil and vim.api.nvim_win_is_valid(state.panel.win)
+    local win = state.panel.win
+    return win ~= nil
+        and vim.api.nvim_win_is_valid(win)
+        and vim.api.nvim_win_get_tabpage(win) == vim.api.nvim_get_current_tabpage()
 end
 
 local function panel_buf()
@@ -288,19 +318,22 @@ local function panel_buf()
             end
         end,
     })
-    -- Closing a float (e.g. Claude Code) or Copilot Chat returns to the window it was opened from. As
-    -- the panel saves when left, there is nothing to continue there, so go back to the code instead
+    -- Closing a window (e.g. Copilot Chat) or hiding a float (e.g. Claude Code) returns to the window it was opened
+    -- from. As the panel saves when left, there is nothing to continue there, so go back to the code instead. Moving
+    -- into the panel from a window that is still shown stays in the panel
     vim.api.nvim_create_autocmd('WinEnter', {
         group = group,
         buffer = p.buf,
         callback = function()
             local from, code = state.left_win, state.code_win
-            if not (from and vim.api.nvim_win_is_valid(from) and code and vim.api.nvim_win_is_valid(code)) then
+            if not (code and vim.api.nvim_win_is_valid(code)) or from == code then
                 return
             end
-            local is_float = vim.api.nvim_win_get_config(from).relative ~= ''
-            local from_buf = vim.api.nvim_win_get_buf(from)
-            if is_float or vim.bo[from_buf].buftype == 'terminal' or vim.bo[from_buf].filetype == 'copilot-chat' then
+            -- A float counts as gone, as some close only after the window below was entered
+            local gone = not (from and vim.api.nvim_win_is_valid(from))
+                or vim.api.nvim_win_get_config(from).hide
+                or vim.api.nvim_win_get_config(from).relative ~= ''
+            if gone then
                 vim.schedule(function()
                     if vim.api.nvim_win_is_valid(code) then
                         vim.api.nvim_set_current_win(code)
@@ -310,25 +343,46 @@ local function panel_buf()
             end
         end,
     })
-    vim.keymap.set('n', 'q', M.close_panel, { buffer = p.buf, desc = 'Close comment panel' })
+    -- Closing returns to the code, which moves the cursor there and would show the comments under it again
+    vim.keymap.set('n', 'q', function()
+        local win = state.code_win
+        if win and vim.api.nvim_win_is_valid(win) then
+            state.dismissed = { buf = vim.api.nvim_win_get_buf(win), lnum = vim.api.nvim_win_get_cursor(win)[1] }
+        end
+        M.close_panel()
+    end, { buffer = p.buf, desc = 'Close comment panel' })
     return p.buf
 end
 
-local function set_panel(lines, ids, new)
+-- Render the sections { tag, header, lines } of the panel. Every header carries an extmark that tells its tag, so
+-- comment text that looks like a header stays text, and deleting the header line invalidates the mark
+local function set_panel(sections, ids, new)
     local p = state.panel
     local buf = panel_buf()
+    local lines, tags = {}, {}
+    for i, section in ipairs(sections) do
+        if i > 1 then
+            table.insert(lines, '')
+        end
+        table.insert(lines, section.header)
+        tags[#lines] = section.tag
+        vim.list_extend(lines, section.lines)
+    end
     -- Rendering starts a new undo history, so undo cannot bring back another comment's section,
     -- which would delete the comment shown now when saved
     local undolevels = vim.bo[buf].undolevels
     vim.bo[buf].undolevels = -1
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.bo[buf].undolevels = undolevels
-    -- Extmarks, as treesitter highlighting of markdown replaces syntax matches
+    -- Highlighted with the extmarks, as treesitter highlighting of markdown replaces syntax matches
     vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-    for i, line in ipairs(lines) do
-        if line:match('^── .* ──$') then
-            vim.api.nvim_buf_set_extmark(buf, ns, i - 1, 0, { line_hl_group = 'ReviewHeader' })
-        end
+    p.tags = {}
+    for lnum, tag in pairs(tags) do
+        local mark = vim.api.nvim_buf_set_extmark(buf, ns, lnum - 1, 0, {
+            line_hl_group = 'ReviewHeader',
+            invalidate = true,
+        })
+        p.tags[mark] = tag
     end
     vim.bo[buf].modified = false
     p.ids, p.new = ids, new
@@ -338,16 +392,16 @@ local function set_panel(lines, ids, new)
 end
 
 local function show_comments(list)
-    local lines, ids = {}, {}
-    for i, c in ipairs(list) do
-        if i > 1 then
-            table.insert(lines, '')
-        end
-        table.insert(lines, header('#' .. c.id, c.file, c.lnum, c.end_lnum))
-        vim.list_extend(lines, vim.split(c.text, '\n'))
+    local sections, ids = {}, {}
+    for _, c in ipairs(list) do
+        table.insert(sections, {
+            tag = '#' .. c.id,
+            header = header('#' .. c.id, c.file, c.lnum, c.end_lnum),
+            lines = vim.split(c.text, '\n'),
+        })
         table.insert(ids, c.id)
     end
-    set_panel(lines, ids, nil)
+    set_panel(sections, ids, nil)
 end
 
 local function open_panel(enter)
@@ -358,6 +412,8 @@ local function open_panel(enter)
         end
         return
     end
+    -- The panel follows to the current tab, its buffer keeps what was written in it
+    M.close_panel()
     local height = math.max(12, math.min(vim.api.nvim_buf_line_count(panel_buf()) + 1, 20))
     p.win = vim.api.nvim_open_win(panel_buf(), enter, { split = 'below', win = -1, height = height })
     local wo = vim.wo[p.win]
@@ -369,9 +425,10 @@ local function open_panel(enter)
     wo.winbar = '%#ReviewHeader# Review comments %*  :w save · empty text or removed header deletes · q close'
 end
 
+-- Close the panel, also when it is open in another tab
 function M.close_panel()
     local p = state.panel
-    if panel_open() then
+    if p.win and vim.api.nvim_win_is_valid(p.win) then
         pcall(vim.api.nvim_win_close, p.win, true)
     end
     p.win = nil
@@ -381,12 +438,31 @@ end
 -- a removed header deletes it and a `── new … ──` section with text creates the pending comment
 function M.save_panel()
     local p = state.panel
+    -- The headers are the lines that still carry the extmark of one. The mark of a deleted header line moves on to
+    -- the line after it and is invalid, which starts the text of the removed section, so it goes with its header
+    local header_tags, removed = {}, {}
+    local marks = vim.api.nvim_buf_get_extmarks(p.buf, ns, 0, -1, { details = true })
+    for _, mark in ipairs(marks) do
+        local id, row, details = mark[1], mark[2], mark[4]
+        if p.tags[id] and not details.invalid and not header_tags[row + 1] then
+            header_tags[row + 1] = p.tags[id]
+        end
+    end
+    for _, mark in ipairs(marks) do
+        if p.tags[mark[1]] and mark[4].invalid then
+            removed[mark[2] + 1] = true
+        end
+    end
     local sections, current, preamble = {}, nil, {}
-    for _, line in ipairs(vim.api.nvim_buf_get_lines(p.buf, 0, -1, false)) do
-        local tag = line:match('^── (%S+) .* ──$')
+    for lnum, line in ipairs(vim.api.nvim_buf_get_lines(p.buf, 0, -1, false)) do
+        local tag = header_tags[lnum]
         if tag then
             current = { tag = tag, lines = {} }
             table.insert(sections, current)
+        elseif removed[lnum] then
+            -- Not a section, so its lines are dropped and its comment is deleted
+            current = { lines = {} }
+            table.insert(current.lines, line)
         else
             table.insert(current and current.lines or preamble, line)
         end
@@ -446,7 +522,13 @@ function M.hover()
     if p.buf and vim.api.nvim_buf_is_valid(p.buf) and (vim.bo[p.buf].modified or p.new) then
         return
     end
-    local list = comments_at(buf, vim.fn.line('.'))
+    local lnum = vim.fn.line('.')
+    local d = state.dismissed
+    if d and d.buf == buf and d.lnum == lnum then
+        return
+    end
+    state.dismissed = nil
+    local list = comments_at(buf, lnum)
     if #list == 0 then
         M.close_panel()
         return
@@ -491,15 +573,18 @@ function M.add()
     end
     state.code_win = vim.api.nvim_get_current_win()
     local file = vim.api.nvim_buf_get_name(buf)
+    local base = commit_base()
     local new = {
         file = file,
         lnum = first,
         end_lnum = last,
-        excerpt = excerpt(buf, first, last),
+        excerpt = excerpt(buf, first, last, base),
+        root = repo_root(file),
+        base = base,
         ft = vim.bo[buf].filetype,
         buf = buf,
     }
-    set_panel({ header('new', file, first, last), '' }, {}, new)
+    set_panel({ { tag = 'new', header = header('new', file, first, last), lines = { '' } } }, {}, new)
     open_panel(true)
     vim.api.nvim_win_set_cursor(p.win, { 2, 0 })
     vim.cmd.startinsert()
@@ -510,6 +595,7 @@ function M.edit()
     if not require_active() then
         return
     end
+    state.dismissed = nil
     M.hover()
     if #comments_at(vim.api.nvim_get_current_buf(), vim.fn.line('.')) == 0 then
         notify('No comment on this line')
@@ -547,7 +633,7 @@ function M.jump(c)
     end
     local buf = vim.api.nvim_get_current_buf()
     if active and not require('unified.diff').is_diff_displayed(buf) then
-        require('unified.diff').show(commit_base(), buf)
+        require('unified.diff').show(c.base, buf)
         require('unified.auto_refresh').setup(buf)
     end
     vim.api.nvim_win_set_cursor(0, { math.min(c.lnum, vim.api.nvim_buf_line_count(buf)), 0 })
@@ -556,8 +642,18 @@ end
 
 -- File preview with the full comment shown below the commented lines
 local function preview(ctx)
-    local ret = Snacks.picker.preview.file(ctx)
-    local buf, c = ctx.preview.win.buf, ctx.item.comment
+    local c = ctx.item.comment
+    local ret
+    if c.buf and vim.api.nvim_buf_is_loaded(c.buf) then
+        -- The lines of the buffer, which the comment's line numbers refer to, rather than of the file, which may
+        -- lack unsaved edits or not exist yet
+        local text = table.concat(vim.api.nvim_buf_get_lines(c.buf, 0, -1, false), '\n')
+        ctx.item.preview = { text = text, ft = c.ft }
+        ret = Snacks.picker.preview.preview(ctx)
+    else
+        ret = Snacks.picker.preview.file(ctx)
+    end
+    local buf = ctx.preview.win.buf
     if not (buf and vim.api.nvim_buf_is_valid(buf)) then
         return ret
     end
@@ -607,27 +703,26 @@ function M.list()
     })
 end
 
--- Whether the comment is on lines of a diff, else on plain lines of a file
-local function on_diff(c)
-    return vim.iter(c.excerpt):any(function(line)
-        return line:match('^[+-]') ~= nil
-    end)
+-- The base commit as `ref (hash) "subject"` and the HEAD of the repository at `root`
+local function describe_base(base, root)
+    local hash = git({ 'rev-parse', '--short', base }, root) or base
+    local subject = git({ 'log', '-1', '--format=%s', base }, root) or ''
+    local head = git({ 'rev-parse', '--short', 'HEAD' }, root) or 'HEAD'
+    local desc = hash == base and hash or ('%s (%s)'):format(base, hash)
+    if subject ~= '' then
+        desc = ('%s "%s"'):format(desc, subject)
+    end
+    return desc, head
 end
 
 local function format_review(list)
     local lines
     local diffed = vim.iter(list):find(on_diff)
-    if diffed or unified_active() then
-        -- The repository of the commented files, which is a worktree's when one is under review
-        local cwd = git({ 'rev-parse', '--show-toplevel' }, vim.fn.fnamemodify((diffed or list[1]).file, ':h'))
-        local base = commit_base()
-        local hash = git({ 'rev-parse', '--short', base }, cwd) or base
-        local subject = git({ 'log', '-1', '--format=%s', base }, cwd) or ''
-        local head = git({ 'rev-parse', '--short', 'HEAD' }, cwd) or 'HEAD'
-        local base_desc = hash == base and hash or ('%s (%s)'):format(base, hash)
-        if subject ~= '' then
-            base_desc = ('%s "%s"'):format(base_desc, subject)
-        end
+    -- The repository and base of the first comment on a diff, which is a worktree's when one is under review.
+    -- Comments in another repository or against another base name theirs
+    local main = (diffed or unified_active()) and (diffed or list[1]) or nil
+    if main then
+        local base_desc, head = describe_base(main.base, main.root)
         lines = {
             ('Code review of the working tree changes against %s, HEAD is %s.'):format(base_desc, head),
             'Line numbers refer to the current working tree files. Please address each comment:',
@@ -639,6 +734,10 @@ local function format_review(list)
     for i, c in ipairs(list) do
         table.insert(lines, '')
         table.insert(lines, ('%d. %s'):format(i, location(c.file, c.lnum, c.end_lnum)))
+        if main and on_diff(c) and (c.base ~= main.base or c.root ~= main.root) then
+            local base_desc, head = describe_base(c.base, c.root)
+            table.insert(lines, ('   Changes against %s, HEAD is %s:'):format(base_desc, head))
+        end
         if #c.excerpt > 0 then
             -- Lines commented outside of a diff are plain code. The fence is longer than any run of backticks
             -- in the code, which would end it otherwise
@@ -673,7 +772,9 @@ local targets = {
     claude = {
         name = 'Claude Code',
         send = function(text)
-            require('custom.terminals').hide(Snacks.terminal.get('tmux', { create = false }))
+            local terminals = require('custom.terminals')
+            terminals.hide(terminals.tmux())
+            terminals.claude_to_current_tab()
             local ok, terminal = pcall(require, 'claudecode.terminal')
             return ok and terminal.send_to_terminal(text, { submit = false, focus = true })
         end,
@@ -714,6 +815,9 @@ function M.send(target)
         notify('No unsent comments')
         return
     end
+    for _, c in ipairs(list) do
+        update_excerpt(c)
+    end
     local text = format_review(list)
 
     if t.send(text) then
@@ -723,8 +827,16 @@ function M.send(target)
         end
         notify(('Sent %d comment(s) to %s'):format(#list, t.name))
     else
-        vim.fn.setreg('+', text)
-        notify(('%s is not running, review copied to the clipboard instead'):format(t.name), vim.log.levels.WARN)
+        -- Without a clipboard provider the `+` register stays empty, so the review goes to the unnamed register
+        local clipboard = vim.fn.has('clipboard') == 1
+        vim.fn.setreg(clipboard and '+' or '"', text)
+        notify(
+            ('%s is not running, review copied to the %s instead'):format(
+                t.name,
+                clipboard and 'clipboard' or 'unnamed register (paste with p)'
+            ),
+            vim.log.levels.WARN
+        )
     end
 end
 
@@ -766,14 +878,21 @@ function M.status()
     return status
 end
 
--- The excerpts sent with the comments show the diff against the base, so they follow it when it changes. A
--- comment in a buffer whose diff is not shown keeps its excerpt, as without a diff it would lose its +/- lines
-local function refresh_excerpts()
+-- The excerpts sent with the comments show the diff against the base, so they follow it when the base of the
+-- current tab's repository changes. Comments in other repositories (another tab's worktree) keep theirs. A comment
+-- in a buffer whose diff is not shown keeps its excerpt, as without a diff it would lose its +/- lines; it is taken
+-- anew against the new base when the review is sent
+local function rebase(base)
+    local root = repo_root(vim.fn.getcwd())
     local udiff = package.loaded['unified.diff']
     for _, c in pairs(state.comments) do
-        if c.buf and vim.api.nvim_buf_is_loaded(c.buf) and udiff and udiff.is_diff_displayed(c.buf) then
-            sync(c)
-            c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum)
+        -- A tab whose base is shown again (entering it) changes nothing
+        if c.root == root and c.base ~= base then
+            c.base = base
+            if c.buf and vim.api.nvim_buf_is_loaded(c.buf) and udiff and udiff.is_diff_displayed(c.buf) then
+                sync(c)
+                c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum, base)
+            end
         end
     end
 end
@@ -813,7 +932,12 @@ function M.start(args)
         vim.api.nvim_create_autocmd('User', {
             group = group,
             pattern = 'UnifiedBaseCommitUpdated',
-            callback = refresh_excerpts,
+            callback = function()
+                local base = unified_base()
+                if base then
+                    rebase(base)
+                end
+            end,
         })
         vim.api.nvim_create_autocmd('BufReadPost', {
             group = group,
@@ -829,11 +953,12 @@ function M.start(args)
     end
     if args and args ~= '' then
         state.base = args
-        if unified_active() and unified_base() ~= args then
+        local shown = unified_base()
+        if shown and shown ~= args then
             -- The diff on screen follows the base, which refreshes the excerpts once unified resolved it
             vim.cmd({ cmd = 'Unified', args = { args } })
         else
-            refresh_excerpts()
+            rebase(args)
         end
     end
     notify(('Review started against %s, comment with <leader>rc'):format(args ~= '' and args or commit_base()))
@@ -857,8 +982,8 @@ local function teardown()
     state.comments = {}
     state.next_id = 1
     state.base = nil
-    state.panel = { buf = nil, win = nil, ids = {}, new = nil }
-    state.code_win, state.left_win = nil, nil
+    state.panel = { buf = nil, win = nil, ids = {}, new = nil, tags = {} }
+    state.code_win, state.left_win, state.dismissed = nil, nil, nil
 end
 
 function M.stop()

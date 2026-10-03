@@ -9,14 +9,25 @@ return {
         'saghen/blink.cmp',
         version = '1.*',
         -- Fetch the prebuilt fuzzy matcher at install time, so offline packages contain it
+        -- A failed download fails the build, so a package is not made without it
         build = function()
-            local done = false
-            require('blink.cmp.fuzzy.download').ensure_downloaded(function()
-                done = true
+            local done, err = false, nil
+            require('blink.cmp.fuzzy.download').ensure_downloaded(function(download_err)
+                done, err = true, download_err
             end)
-            vim.wait(120000, function()
+            if not vim.wait(120000, function()
                 return done
-            end)
+            end) then
+                error('Downloading the blink.cmp fuzzy matcher timed out')
+            end
+            if err then
+                error('Downloading the blink.cmp fuzzy matcher failed: ' .. tostring(err))
+            end
+            -- Some failures are only notified, so the library has to load
+            local ok, load_err = pcall(require, 'blink.cmp.fuzzy.rust')
+            if not ok then
+                error('The blink.cmp fuzzy matcher cannot be loaded: ' .. tostring(load_err))
+            end
         end,
         event = { 'InsertEnter', 'CmdlineEnter' },
         ---@module 'blink.cmp'
@@ -43,7 +54,7 @@ return {
                 },
                 ['<S-Tab>'] = { 'select_prev', 'snippet_backward', 'fallback' },
                 -- Confirm the selected item, or the first one if none is selected
-                ['<S-CR>'] = { 'accept', 'fallback' },
+                ['<S-CR>'] = { 'select_and_accept', 'fallback' },
                 ['<C-Space>'] = { 'show', 'show_documentation', 'hide_documentation' },
                 ['<C-e>'] = { 'hide', 'fallback' },
                 ['<C-x>'] = {

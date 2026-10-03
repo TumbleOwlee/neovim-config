@@ -2,12 +2,15 @@ steps:
   # Installs the plugins at the versions of lazy-lock.json and, for the nightly tag, packages them with the
   # configuration. Every step runs in a fresh container, so installing and packaging is one step
   install:
-    image: tumbleowlee/neovim:latest
+    # glibc, so the compiled parsers and libraries of the package load on common distributions. The dependencies are
+    # the ones of .shrike/neovim.Dockerfile, see .ci/install-deps.sh
+    image: debian:trixie-slim
 
     commands:
+      - sh .ci/install-deps.sh || exit 1
       - mkdir -p ~/.config/nvim
       - cp -r ./init.lua ./lua ./after ./lazy-lock.json ~/.config/nvim/ || exit 1
-      - nvim +'SyncInstall' +qall || exit 1
+      - nvim --headless +'SyncInstall' +qall || exit 1
       - |
         if [ "$CI_COMMIT_TAG" = nightly ]; then
           export GIT_PATH=$(pwd)

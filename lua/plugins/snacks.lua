@@ -101,12 +101,7 @@ return {
             {
                 '<A-d>',
                 function()
-                    local tmux = Snacks.terminal.get('tmux', { create = false })
-                    require('custom.terminals').hide_others(tmux)
-                    Snacks.terminal.toggle(
-                        'tmux',
-                        { win = { position = 'float', width = 0.9, height = 0.9, border = 'rounded' } }
-                    )
+                    require('custom.terminals').toggle_tmux()
                 end,
                 mode = { 'n', 't' },
                 desc = 'Toggle terminal',
@@ -134,10 +129,7 @@ return {
                             key = 's',
                             desc = 'Load Last Session',
                             action = function()
-                                require('resession').load(
-                                    vim.fn.getcwd(),
-                                    { dir = 'dirsession', silence_errors = true }
-                                )
+                                require('custom.session').load()
                             end,
                         },
                         { icon = ' ', key = 'u', desc = 'Update Plugins', action = ':Lazy update' },
@@ -151,7 +143,7 @@ return {
                 },
             },
             notifier = {
-                render = 'fancy',
+                style = 'fancy',
                 timeout = 6000,
             },
             picker = {},
@@ -178,8 +170,11 @@ return {
                         if i == #p + 1 or p[i].token == ev.data.params.token then
                             p[i] = {
                                 token = ev.data.params.token,
-                                msg = ('[%3d%%] %s%s'):format(
-                                    value.kind == 'end' and 100 or value.percentage or 100,
+                                -- Servers that report no percentage get none shown until they are done
+                                msg = ('%s%s%s'):format(
+                                    (value.kind == 'end' or value.percentage)
+                                            and ('[%3d%%] '):format(value.kind == 'end' and 100 or value.percentage)
+                                        or '',
                                     value.title or '',
                                     value.message and (' **%s**'):format(value.message) or ''
                                 ),

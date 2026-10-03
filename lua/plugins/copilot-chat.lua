@@ -17,14 +17,17 @@ return {
             { '<leader>Cf', '<cmd>CopilotChatFix<CR>', mode = { 'n', 'x' }, desc = 'Fix code' },
         },
         config = function()
-            require('CopilotChat').setup({
+            -- Half the editor, at most 150 columns, so the code stays visible next to it. The width is read when the
+            -- chat opens, so it follows the size of the editor
+            local function width()
+                return math.min(150, math.floor(vim.o.columns * 0.5))
+            end
+            local chat = require('CopilotChat')
+            chat.setup({
                 window = {
                     layout = 'vertical',
-                    relative = 'win',
-                    width = math.min(vim.o.columns, 150), -- Fixed width in columns
-                    height = 1.0, -- Fixed height in rows
-                    row = 1,
-                    col = vim.o.columns - math.min(vim.o.columns, 150),
+                    width = width(),
+                    height = 1.0,
                     border = 'double', -- 'single', 'double', 'rounded', 'solid'
                     title = '🤖 AI Assistant',
                     zindex = 100, -- Ensure window stays on top
@@ -39,9 +42,17 @@ return {
                 tools = { 'file', 'glob', 'grep' }, -- List of tools to use
             })
 
+            local group = vim.api.nvim_create_augroup('CopilotChatBuffer', { clear = true })
+            vim.api.nvim_create_autocmd('VimResized', {
+                group = group,
+                callback = function()
+                    chat.config.window.width = width()
+                end,
+            })
+
             -- Customize chat buffer
             vim.api.nvim_create_autocmd('FileType', {
-                group = vim.api.nvim_create_augroup('CopilotChatBuffer', { clear = true }),
+                group = group,
                 pattern = 'copilot-chat',
                 callback = function()
                     vim.opt_local.relativenumber = false

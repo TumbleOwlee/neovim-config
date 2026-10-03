@@ -7,7 +7,13 @@ map({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, desc = 'Move 
 map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = 'Move cursor up' })
 
 -- Buffers
-map('n', '<A-m>', '<cmd>update<CR><cmd>bnext<CR>', { desc = 'Save and go to next buffer' })
+map('n', '<A-m>', function()
+    -- A buffer that is no file (no name, or a special buftype) cannot be saved, but it is still left
+    if vim.bo.buftype == '' and vim.api.nvim_buf_get_name(0) ~= '' then
+        vim.cmd.update()
+    end
+    vim.cmd.bnext()
+end, { desc = 'Save and go to next buffer' })
 
 -- Tabs. Most terminals send <Tab> for <C-i>, so jumping forward in the jump list only keeps working in a
 -- terminal that tells the two apart, which is what the <C-i> mapping is for. <C-t> replaces popping the tag stack

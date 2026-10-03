@@ -186,6 +186,45 @@ return {
                 end
             end
 
+            -- Split arguments like a shell: quotes keep spaces in an argument and a backslash escapes the next character
+            -- (except within single quotes)
+            local function split_args(line)
+                local args, current, quote, has = {}, {}, nil, false
+                local i = 1
+                while i <= #line do
+                    local ch = line:sub(i, i)
+                    if quote then
+                        if ch == quote then
+                            quote = nil
+                        elseif ch == '\\' and quote == '"' and i < #line then
+                            i = i + 1
+                            table.insert(current, line:sub(i, i))
+                        else
+                            table.insert(current, ch)
+                        end
+                    elseif ch == '"' or ch == "'" then
+                        quote, has = ch, true
+                    elseif ch == '\\' and i < #line then
+                        i = i + 1
+                        table.insert(current, line:sub(i, i))
+                        has = true
+                    elseif ch:match('%s') then
+                        if has then
+                            table.insert(args, table.concat(current))
+                            current, has = {}, false
+                        end
+                    else
+                        table.insert(current, ch)
+                        has = true
+                    end
+                    i = i + 1
+                end
+                if has then
+                    table.insert(args, table.concat(current))
+                end
+                return args
+            end
+
             local dap = require('dap')
             dap.adapters.lldb = {
                 type = 'executable',
@@ -214,7 +253,7 @@ return {
                     stopOnEntry = false,
                     args = function()
                         vim.g.dap_args = vim.fn.input('Arguments: ', vim.g.dap_args or '')
-                        return vim.split(vim.g.dap_args, ' +', { trimempty = true })
+                        return split_args(vim.g.dap_args)
                     end,
                     runInTerminal = false,
                 },

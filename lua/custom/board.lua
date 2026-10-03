@@ -271,18 +271,20 @@ end
 -- Bring the status line and the window bars up to date with the board
 local function refresh_bars()
     update_winbar()
-    pcall(function()
-        require('lualine').refresh()
-    end)
+    -- Only once lualine is loaded, as requiring it would load it ahead of its VeryLazy event
+    if package.loaded.lualine then
+        pcall(require('lualine').refresh)
+    end
 end
 
-local refresh
+local refresh, watch
 
-local function start_watcher(dir)
+-- Watch a directory, calling `on_change` (default: refresh) once its changes settled
+local function start_watcher(dir, on_change)
     local watcher = assert(vim.uv.new_fs_event())
     -- A moving card changes two directories and an agent appends to its card line by line
     local ok = watcher:start(dir, {}, function()
-        state.timer:start(100, 0, vim.schedule_wrap(refresh))
+        state.timer:start(100, 0, vim.schedule_wrap(on_change or refresh))
     end)
     if ok then
         return watcher
@@ -323,6 +325,11 @@ function refresh()
     if not state.root then
         return
     end
+    -- A deleted tasks directory takes its watchers along, so wait for the board to be created again
+    if vim.fn.isdirectory(state.root) == 0 then
+        watch()
+        return
+    end
     local approvals = scan_approvals()
     for slug, approval in pairs(approvals) do
         local before = state.approvals[slug]
@@ -353,10 +360,12 @@ local function load()
     refresh_bars()
 end
 
--- Follow the board of the directory nvim runs in, if it has one
-local function watch()
+-- Follow the board of the directory nvim runs in, if it has one, else wait for one to be created
+function watch()
     unwatch()
-    local root = vim.fn.getcwd(-1, -1) .. '/.claude/tasks'
+    local cwd = vim.fn.getcwd(-1, -1)
+    local claude = cwd .. '/.claude'
+    local root = claude .. '/tasks'
     root = vim.fn.isdirectory(root) == 1 and root or nil
     -- The followed run belongs to the board it was picked on
     if root ~= state.root then
@@ -364,11 +373,23 @@ local function watch()
     end
     state.root = root
     state.cards, state.approvals = {}, {}
+    state.timer = state.timer or assert(vim.uv.new_timer())
     if not state.root then
+        -- `.claude` is watched for the tasks directory once it exists, the working directory for `.claude` until then
+        local function created()
+            local has_claude = vim.fn.isdirectory(claude) == 1
+            if vim.fn.isdirectory(claude .. '/tasks') == 1 or (has_claude and not state.watchers[claude]) then
+                watch()
+            end
+        end
+        for _, dir in ipairs({ cwd, claude }) do
+            if vim.fn.isdirectory(dir) == 1 then
+                state.watchers[dir] = start_watcher(dir, created)
+            end
+        end
         refresh_bars()
         return
     end
-    state.timer = state.timer or assert(vim.uv.new_timer())
     load()
 end
 
@@ -428,23 +449,39 @@ end
 function M.open_approval()
     local function open(slug)
         local approval = slug and state.approvals[slug]
-        if approval then
-            os.remove(approval.marker)
-            state.approvals[slug] = nil
-            -- A tab of their own, the first file on top, keeps the files being worked on as they are
-            local readable = vim.tbl_filter(function(path)
-                return vim.fn.filereadable(path) == 1
-            end, approval.paths)
-            for i, path in ipairs(readable) do
-                vim.cmd((i == 1 and 'tabedit ' or 'belowright split ') .. vim.fn.fnameescape(path))
-            end
-            if #readable == 0 then
-                notify(('%s does not exist'):format(approval.name), vim.log.levels.WARN)
-            else
-                vim.cmd.wincmd('t')
-            end
-            refresh_bars()
+        if not approval then
+            return
         end
+        -- Relative paths are relative to the directory of the board, not to the one of the current tab
+        local base = vim.fn.getcwd(-1, -1)
+        local readable = {}
+        for _, path in ipairs(approval.paths) do
+            path = vim.fs.normalize(vim.fn.isabsolutepath(path) == 1 and path or vim.fs.joinpath(base, path))
+            if vim.fn.filereadable(path) == 1 then
+                table.insert(readable, path)
+            end
+        end
+        -- The marker stays while there is nothing to approve, so the request is not lost
+        if #readable == 0 then
+            notify(('%s does not exist'):format(approval.name), vim.log.levels.WARN)
+            return
+        end
+        os.remove(approval.marker)
+        state.approvals[slug] = nil
+        -- A tab of their own, the first file on top, keeps the files being worked on as they are
+        vim.cmd.tabnew()
+        -- A new tab takes over the directory of the current one, which may be a worktree under review. The files of
+        -- the board belong to the directory nvim was started in, so the tab neither counts as one of the worktree
+        -- nor shows its diff
+        if vim.fn.haslocaldir(-1, 0) == 1 then
+            vim.cmd.tcd(vim.fn.fnameescape(base))
+            vim.t.worktree, vim.t.unified_base, vim.t.unified_tree = nil, nil, nil
+        end
+        for i, path in ipairs(readable) do
+            vim.cmd((i == 1 and 'edit ' or 'belowright split ') .. vim.fn.fnameescape(path))
+        end
+        vim.cmd.wincmd('t')
+        refresh_bars()
     end
     local slugs = approval_slugs()
     if #slugs == 0 then

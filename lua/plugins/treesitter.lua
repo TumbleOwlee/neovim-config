@@ -1,25 +1,13 @@
 -- Parsers installed on startup, other languages are installed when first opened
-local parsers = {
-    'bash',
-    'c',
-    'cpp',
-    'diff',
-    'html',
-    'javascript',
-    'json',
-    'lua',
-    'markdown',
-    'markdown_inline',
-    'python',
-    'query',
-    'regex',
-    'rust',
-    'tsx',
-    'typescript',
-    'vim',
-    'vimdoc',
-    'yaml',
-}
+local parsers = require('config.parsers')
+
+-- Whether parsers of the list are not installed. The offline package contains them, so it needs no tree-sitter CLI
+local function missing_parsers(ts)
+    local installed = ts.get_installed('parsers')
+    return vim.iter(parsers):any(function(lang)
+        return not vim.list_contains(installed, lang)
+    end)
+end
 
 -- Enable highlighting and, where the parser supports it, indentation
 local function start(buf, lang)
@@ -58,7 +46,7 @@ return {
             if can_install then
                 -- Asynchronous, already installed parsers are skipped
                 ts.install(parsers)
-            elseif not headless then
+            elseif not headless and missing_parsers(ts) then
                 vim.schedule(function()
                     vim.notify(
                         "Parsers can't be installed. Run 'cargo install --locked tree-sitter-cli'!",
@@ -76,7 +64,12 @@ return {
                     if not lang then
                         return
                     end
-                    if vim.treesitter.language.add(lang) then
+                    -- A parser that cannot be loaded (e.g. built for another platform) throws, which leaves the
+                    -- buffer without treesitter instead of failing every FileType event
+                    local ok, added = pcall(vim.treesitter.language.add, lang)
+                    if not ok then
+                        vim.notify_once(tostring(added), vim.log.levels.WARN, { title = 'Tree-Sitter' })
+                    elseif added then
                         start(args.buf, lang)
                     elseif can_install then
                         available = available or ts.get_available()

@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > This is a personal neovim configuration. It may be updated any time. If you have any suggestions or plugin recommendations, please share them and I may introduce them to this environment.
 
-[![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?events=tag&workflow=Package&step=artifact)](https://github-ci.code-ape.dev/repos/1)
+[![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?events=tag&workflow=Package&step=install)](https://github-ci.code-ape.dev/repos/1)
 [![status-badge](https://github-ci.code-ape.dev/api/badges/1/status.svg?events=tag&workflow=Package&step=upload)](https://github-ci.code-ape.dev/repos/1)
 [![Nightly Tag](https://github.com/TumbleOwlee/neovim-config/actions/workflows/nightly.yml/badge.svg)](https://github.com/TumbleOwlee/neovim-config/actions/workflows/nightly.yml)
 [![Format](https://github.com/TumbleOwlee/neovim-config/actions/workflows/format.yml/badge.svg)](https://github.com/TumbleOwlee/neovim-config/actions/workflows/format.yml)
@@ -30,7 +30,9 @@ git clone https://github.com/TumbleOwlee/neovim-config ~/.config/nvim/
 > [!NOTE]
 > The nightly package is rebuilt on every commit to `main` and contains the plugins at the versions of `lazy-lock.json`.
 
-In case your environment doesn't have internet access, this repository provides a nightly package containing the configuration and all installed plugins. Just go to the [nightly release](https://github.com/TumbleOwlee/neovim-config/releases/tag/nightly) and download the [`neovim-config.tar.gz`](https://github.com/TumbleOwlee/neovim-config/releases/download/nightly/neovim-config.tar.gz). Move the archive onto your system and just unpack it into `~/` using `tar -xvf neovim-config.tar.gz`. The archive provides the contents of `~/.config/nvim` and `~/.local/share/nvim`. Afterwards you are ready to go.
+In case your environment doesn't have internet access, this repository provides a nightly package containing the configuration, all installed plugins and the treesitter parsers of the languages listed in [`lua/config/parsers.lua`](https://github.com/TumbleOwlee/neovim-config/blob/main/lua/config/parsers.lua). Language servers are not part of it, as Mason downloads them; install them on a machine with access to the same platform and copy `~/.local/share/nvim/mason` along. Just go to the [nightly release](https://github.com/TumbleOwlee/neovim-config/releases/tag/nightly) and download the [`neovim-config.tar.gz`](https://github.com/TumbleOwlee/neovim-config/releases/download/nightly/neovim-config.tar.gz). Move the archive onto your system and just unpack it into `~/` using `tar -xvf neovim-config.tar.gz`. The archive provides the contents of `~/.config/nvim` and `~/.local/share/nvim`. Afterwards you are ready to go. The package is built on Debian for x86_64 Linux with glibc; its parsers and compiled plugin libraries don't load on other platforms (e.g. musl based distributions like Alpine).
+
+Building the package (`:SyncInstall`) needs the `tree-sitter` CLI and a C compiler to install the parsers, and fails without them.
 
 ## AI Assistants
 
@@ -70,7 +72,7 @@ Review changes and send the comments to Claude Code or Copilot Chat. A review us
 | `<leader>re` / `<leader>rd` / `<leader>rl` | Edit / delete the comments on the line / list all comments |
 | `<leader>rs` / `<leader>rp` | Send the unsent comments to Claude Code / Copilot Chat (`:Review send [claude\|copilot]`) |
 | `:Review end` / `<leader>rq` | End the review |
-| `:Worktree [name] [stage]` / `<leader>gw` | Review a linked git worktree in its own tab, read-only and without rust-analyzer; `stage` limits the diff to its last commit |
+| `:Worktree [name] [stage]` / `<leader>gw` | Review a linked git worktree in its own tab, read-only and without language servers; `stage` limits the diff to its last commit |
 
 ## Task Board
 

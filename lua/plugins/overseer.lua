@@ -7,24 +7,23 @@ return {
             {
                 '<leader>ss',
                 function()
-                    require('resession').save(vim.fn.getcwd(), { dir = 'dirsession', notify = true })
+                    require('custom.session').save(true)
                 end,
                 desc = 'Save session',
             },
             {
                 '<leader>sl',
                 function()
-                    require('resession').load(vim.fn.getcwd(), { dir = 'dirsession', silence_errors = true })
+                    require('custom.session').load()
                 end,
                 desc = 'Load session',
             },
         },
         config = function()
             local opts = {
+                -- Saved by the autocmds below instead, which keep a session from being replaced by an empty one
                 autosave = {
-                    enabled = true,
-                    interval = 60,
-                    notify = false,
+                    enabled = false,
                 },
                 options = {
                     'binary',
@@ -33,9 +32,10 @@ return {
                     'cmdheight',
                     'diff',
                     'filetype',
-                    'modifiable',
+                    -- Not 'modifiable' and 'readonly': files of a worktree under review are held, which
+                    -- custom.worktree does again for a restored worktree tab, and a held file must not stay so
+                    -- once the worktree is gone
                     'previewwindow',
-                    'readonly',
                     'scrollbind',
                     'winfixheight',
                     'winfixwidth',
@@ -70,19 +70,25 @@ return {
                     if use_dir_session() then
                         -- Save these to a different directory, so our manual sessions don't get polluted.
                         -- A restored session means the dashboard (empty buffer only) is not shown.
-                        resession.load(vim.fn.getcwd(), { dir = 'dirsession', silence_errors = true })
+                        require('custom.session').load()
                     end
                 end,
                 nested = true,
             })
-            vim.api.nvim_create_autocmd('VimLeavePre', {
-                group = group,
-                callback = function()
-                    if use_dir_session() and has_file_buffers() then
-                        resession.save(vim.fn.getcwd(), { dir = 'dirsession', notify = false })
-                    end
-                end,
-            })
+            local function autosave()
+                -- Saving visits every tab, which ends Visual, Select and Operator-pending mode, so it waits for the
+                -- next time then
+                local mode = vim.api.nvim_get_mode().mode
+                if mode:match('^[vVsS\22\19]') or mode:match('^no') then
+                    return
+                end
+                if use_dir_session() and has_file_buffers() then
+                    require('custom.session').save(false)
+                end
+            end
+            vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = autosave })
+            local timer = assert(vim.uv.new_timer())
+            timer:start(60000, 60000, vim.schedule_wrap(autosave))
             vim.api.nvim_create_autocmd('StdinReadPre', {
                 group = group,
                 callback = function()
@@ -142,8 +148,8 @@ return {
                     'on_exit_set_status',
                     { 'on_complete_notify', system = 'unfocused' },
                     { 'on_complete_dispose', require_view = { 'SUCCESS', 'FAILURE' } },
-                    -- Show task output in a float when a task starts
-                    { 'open_output', direction = 'float', on_start = 'always' },
+                    -- Show task output in a float when a task starts, unless it fills the quickfix list (:Grep)
+                    { 'open_output', direction = 'float', on_start = 'if_no_on_output_quickfix' },
                 },
                 default_neotest = {
                     'unique',
@@ -230,15 +236,17 @@ return {
                 if num_subs == 0 then
                     cmd = cmd .. ' ' .. params.args
                 end
+                -- Expanded once, as backticks run a shell command
+                cmd = vim.fn.expandcmd(cmd)
                 local task = require('overseer').new_task({
-                    cmd = vim.fn.expandcmd(cmd),
+                    cmd = cmd,
                     components = {
                         'unique',
                         'default',
                     },
                 })
                 task:start()
-                vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = 'Make' })
+                vim.notify("Start '" .. cmd .. "'", vim.log.levels.INFO, { title = 'Make' })
             end, {
                 desc = 'Run your makeprg as an Overseer task',
                 nargs = '*',
@@ -269,15 +277,16 @@ return {
                 if params.args:len() > 0 then
                     cmd = cmd .. ' ' .. params.args
                 end
+                cmd = vim.fn.expandcmd(cmd)
                 local task = require('overseer').new_task({
-                    cmd = vim.fn.expandcmd(cmd),
+                    cmd = cmd,
                     components = {
                         'unique',
                         'default',
                     },
                 })
                 task:start()
-                vim.notify("Start '" .. vim.fn.expandcmd(cmd) .. "'", vim.log.levels.INFO, { title = 'CMake' })
+                vim.notify("Start '" .. cmd .. "'", vim.log.levels.INFO, { title = 'CMake' })
             end, {
                 desc = 'Run your CMake command as an Overseer task',
                 nargs = '*',
