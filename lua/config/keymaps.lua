@@ -10,21 +10,22 @@ map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = 'Move 
 map('n', '<A-m>', '<cmd>update<CR><cmd>bnext<CR>', { desc = 'Save and go to next buffer' })
 
 -- Tabs. Most terminals send <Tab> for <C-i>, so jumping forward in the jump list only keeps working in a
--- terminal that tells the two apart, which is what the <C-i> mapping is for
-map('n', '<Tab>', '<cmd>tabnext<CR>', { desc = 'Next tab' })
-map('n', '<S-Tab>', '<cmd>tabprevious<CR>', { desc = 'Previous tab' })
-map('n', '<C-i>', '<C-i>', { desc = 'Jump forward' })
-map('n', '<C-t>', '<cmd>tab split<CR>', { desc = 'Open current buffer in new tab' })
-map('n', '<C-q>', function()
+-- terminal that tells the two apart, which is what the <C-i> mapping is for. <C-t> replaces popping the tag stack
+local function close_tab()
     -- The last tab cannot be closed
     if #vim.api.nvim_list_tabpages() > 1 then
         vim.cmd.tabclose()
     end
-end, { desc = 'Close current tab' })
+end
+map('n', '<Tab>', '<cmd>tabnext<CR>', { desc = 'Next tab' })
+map('n', '<S-Tab>', '<cmd>tabprevious<CR>', { desc = 'Previous tab' })
+map('n', '<C-i>', '<C-i>', { desc = 'Jump forward' })
+map('n', '<C-t>', '<cmd>tab split<CR>', { desc = 'Open current buffer in new tab' })
+map('n', '<C-q>', close_tab, { desc = 'Close current tab' })
 map('n', ']<Tab>', '<cmd>tabnext<CR>', { desc = 'Next tab' })
 map('n', '[<Tab>', '<cmd>tabprevious<CR>', { desc = 'Previous tab' })
-map('n', '<leader><Tab>n', '<cmd>tabnew %<CR>', { desc = 'Open current buffer in new tab' })
-map('n', '<leader><Tab>c', '<cmd>tabclose<CR>', { desc = 'Close current tab' })
+map('n', '<leader><Tab>n', '<cmd>tab split<CR>', { desc = 'Open current buffer in new tab' })
+map('n', '<leader><Tab>c', close_tab, { desc = 'Close current tab' })
 
 -- Fold all lines not matching a pattern
 map('n', '<A-q>', function()

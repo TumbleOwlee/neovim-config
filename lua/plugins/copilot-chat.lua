@@ -36,7 +36,6 @@ return {
                 },
                 separator = '━━',
                 auto_fold = true, -- Automatically folds non-assistant messages
-                model = 'claude-opus-4.6', -- Default model, see :CopilotChatModels
                 tools = { 'file', 'glob', 'grep' }, -- List of tools to use
             })
 

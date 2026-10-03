@@ -1,19 +1,13 @@
--- Activate highlight on search pattern
+-- Highlight search matches while searching: the first key pressed in normal mode after the cursor moved turns the
+-- highlight on if it searches, else off
 local hl_ns = vim.api.nvim_create_namespace('search')
 local hlsearch_group = vim.api.nvim_create_augroup('hlsearch_group', { clear = true })
+local search_keys = { '<CR>', 'n', 'N', '*', '#', '?', '/' }
 
 local function manage_hlsearch(char)
-    local key = vim.fn.keytrans(char)
-    local keys = { '<CR>', 'n', 'N', '*', '#', '?', '/' }
-
     if vim.fn.mode() == 'n' then
-        if not vim.tbl_contains(keys, key) then
-            vim.cmd([[ :set nohlsearch ]])
-        elseif vim.tbl_contains(keys, key) then
-            vim.cmd([[ :set hlsearch ]])
-        end
+        vim.o.hlsearch = vim.list_contains(search_keys, vim.fn.keytrans(char))
     end
-
     vim.on_key(nil, hl_ns)
 end
 

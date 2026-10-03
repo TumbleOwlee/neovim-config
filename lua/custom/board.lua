@@ -7,13 +7,12 @@ local group = vim.api.nvim_create_augroup('board', { clear = true })
 local states = { 'open', 'inprogress', 'inreview', 'done' }
 local state = {
     root = nil, -- the tasks directory, nil without a board
-    watchers = {},
+    watchers = {}, -- directory -> watcher
     timer = nil,
     cards = {}, -- id -> { id, slug, label, state, fields, ready }
     winbar = '', -- the steps of the followed run, shown above every file window
     focus = nil, -- slug of the only run this session shows, nil for all runs
     approvals = {}, -- slug -> { marker, paths, name, mtime } of the files waiting for the user's approval
-    artifact_watchers = {}, -- artifact directory -> watcher
 }
 
 local function notify(msg, level)
@@ -210,9 +209,11 @@ local function steps(run, approval)
     return list
 end
 
--- A window gets the bar if it shows a file and has no bar of its own
+-- A window gets the bar if it shows a file and has no bar of its own. Without a focus, the bar shows the first
+-- run and names it, followed by the number of the other runs
 local function update_winbar()
-    local run = runs()[1]
+    local all = runs()
+    local run = all[1]
     local expr = "%{%v:lua.require'custom.board'.winbar()%}"
     state.winbar = ''
     if run then
@@ -232,6 +233,9 @@ local function update_winbar()
             table.insert(blocks, previous)
         end
         local parts = { '%<' }
+        if #all > 1 then
+            table.insert(parts, ('%%#WinBar# %s (+%d) '):format(run.slug:gsub('%%', '%%%%'), #all - 1))
+        end
         for i, block in ipairs(blocks) do
             local next_bg = blocks[i + 1] and blocks[i + 1].bg or colors.bar
             table.insert(
@@ -284,24 +288,32 @@ local function start_watcher(dir)
     watcher:close()
 end
 
--- The marker of a run lies in its artifact directory, which exists only once the run started
-local function watch_artifacts()
-    local dirs = {}
+-- Watch the tasks directory, the directories of the states and the artifact directory of every run, as far as
+-- they exist. The marker of a run lies in its artifact directory, which exists only once the run started, and the
+-- tasks directory tells when another directory is created
+local function watch_dirs()
+    local dirs = { [state.root] = true }
+    for _, name in ipairs(vim.list_extend({ 'artifacts' }, states)) do
+        local dir = state.root .. '/' .. name
+        if vim.fn.isdirectory(dir) == 1 then
+            dirs[dir] = true
+        end
+    end
     for _, dir in ipairs(vim.fn.glob(state.root .. '/artifacts/*/', true, true)) do
         dir = dir:gsub('/$', '')
         if not state.focus or vim.fs.basename(dir) == state.focus then
             dirs[dir] = true
         end
     end
-    for dir, watcher in pairs(state.artifact_watchers) do
+    for dir, watcher in pairs(state.watchers) do
         if not dirs[dir] then
             watcher:stop()
             watcher:close()
-            state.artifact_watchers[dir] = nil
+            state.watchers[dir] = nil
         end
     end
     for dir in pairs(dirs) do
-        state.artifact_watchers[dir] = state.artifact_watchers[dir] or start_watcher(dir)
+        state.watchers[dir] = state.watchers[dir] or start_watcher(dir)
     end
 end
 
@@ -317,25 +329,25 @@ function refresh()
         end
     end
     state.approvals = approvals
-    watch_artifacts()
+    watch_dirs()
 
     state.cards = scan()
     refresh_bars()
 end
 
 local function unwatch()
-    for _, watcher in ipairs(vim.list_extend(vim.tbl_values(state.artifact_watchers), state.watchers)) do
+    for _, watcher in pairs(state.watchers) do
         watcher:stop()
         watcher:close()
     end
-    state.watchers, state.artifact_watchers = {}, {}
+    state.watchers = {}
 end
 
 -- Take the board as it is now, without announcing the approvals already waiting
 local function load()
     state.cards = scan()
     state.approvals = scan_approvals()
-    watch_artifacts()
+    watch_dirs()
     refresh_bars()
 end
 
@@ -350,9 +362,6 @@ local function watch()
         return
     end
     state.timer = state.timer or assert(vim.uv.new_timer())
-    for _, dir in ipairs(vim.list_extend({ 'artifacts' }, states)) do
-        table.insert(state.watchers, start_watcher(state.root .. '/' .. dir))
-    end
     load()
 end
 

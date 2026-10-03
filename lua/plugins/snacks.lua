@@ -120,45 +120,46 @@ return {
             },
         },
         ---@type snacks.Config
-        config = function()
-            require('snacks').setup({
-                dashboard = {
-                    preset = {
-                        keys = {
-                            { icon = ' ', key = 'f', desc = 'Find File', action = ':lua Snacks.picker.files()' },
-                            { icon = ' ', key = '?', desc = 'Recents', action = ':lua Snacks.picker.recent()' },
-                            { icon = ' ', key = 'w', desc = 'Find Word', action = ':lua Snacks.picker.grep()' },
-                            { icon = ' ', key = 'n', desc = 'New File', action = ':ene | startinsert' },
-                            { icon = ' ', key = 'b', desc = 'Bookmarks', action = ':lua Snacks.picker.marks()' },
-                            {
-                                icon = '󰸧 ',
-                                key = 's',
-                                desc = 'Load Last Session',
-                                action = function()
-                                    require('resession').load(
-                                        vim.fn.getcwd(),
-                                        { dir = 'dirsession', silence_errors = true }
-                                    )
-                                end,
-                            },
-                            { icon = ' ', key = 'u', desc = 'Update Plugins', action = ':Lazy update' },
-                            { icon = '󰗼 ', key = 'q', desc = 'Exit', action = ':qa' },
+        opts = {
+            dashboard = {
+                preset = {
+                    keys = {
+                        { icon = ' ', key = 'f', desc = 'Find File', action = ':lua Snacks.picker.files()' },
+                        { icon = ' ', key = '?', desc = 'Recents', action = ':lua Snacks.picker.recent()' },
+                        { icon = ' ', key = 'w', desc = 'Find Word', action = ':lua Snacks.picker.grep()' },
+                        { icon = ' ', key = 'n', desc = 'New File', action = ':ene | startinsert' },
+                        { icon = ' ', key = 'b', desc = 'Bookmarks', action = ':lua Snacks.picker.marks()' },
+                        {
+                            icon = '󰸧 ',
+                            key = 's',
+                            desc = 'Load Last Session',
+                            action = function()
+                                require('resession').load(
+                                    vim.fn.getcwd(),
+                                    { dir = 'dirsession', silence_errors = true }
+                                )
+                            end,
                         },
-                    },
-                    sections = {
-                        { section = 'header' },
-                        { section = 'keys', gap = 1, padding = 1 },
-                        { section = 'startup' },
+                        { icon = ' ', key = 'u', desc = 'Update Plugins', action = ':Lazy update' },
+                        { icon = '󰗼 ', key = 'q', desc = 'Exit', action = ':qa' },
                     },
                 },
-                notifier = {
-                    render = 'fancy',
-                    timeout = 6000,
+                sections = {
+                    { section = 'header' },
+                    { section = 'keys', gap = 1, padding = 1 },
+                    { section = 'startup' },
                 },
-                picker = {},
-                -- Directories are opened with oil
-                explorer = { replace_netrw = false },
-            })
+            },
+            notifier = {
+                render = 'fancy',
+                timeout = 6000,
+            },
+            picker = {},
+            -- Directories are opened with oil
+            explorer = { replace_netrw = false },
+        },
+        config = function(_, opts)
+            require('snacks').setup(opts)
             ---@type table<number, {token:lsp.ProgressToken, msg:string, done:boolean}[]>
             local progress = vim.defaulttable()
             vim.api.nvim_create_autocmd('LspProgress', {
@@ -193,7 +194,7 @@ return {
                     end, p)
 
                     local spinner = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }
-                    vim.notify(table.concat(msg, '\n'), 'info', {
+                    vim.notify(table.concat(msg, '\n'), vim.log.levels.INFO, {
                         id = 'lsp_progress',
                         title = client.name,
                         opts = function(notif)

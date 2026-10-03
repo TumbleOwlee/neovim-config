@@ -35,8 +35,10 @@ require('lazy').setup({
     },
 })
 
--- Uses the Lua API: with a UI attached the :Lazy command only exists after VeryLazy,
+-- Install the plugins at the commits of lazy-lock.json and move installed ones back to them, so packages contain
+-- the versions committed. Uses the Lua API: with a UI attached the :Lazy command only exists after VeryLazy,
 -- which is too late for `nvim +SyncInstall +qall` (CI)
 vim.api.nvim_create_user_command('SyncInstall', function()
-    require('lazy').sync({ wait = true, show = false })
-end, { desc = 'Install all plugins synchronously!' })
+    require('lazy').install({ wait = true, show = false, lockfile = true })
+    require('lazy').restore({ wait = true, show = false })
+end, { desc = 'Install all plugins at the versions of lazy-lock.json' })

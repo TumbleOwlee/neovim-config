@@ -1,28 +1,22 @@
 steps:
-  check:
+  # Installs the plugins at the versions of lazy-lock.json and, for the nightly tag, packages them with the
+  # configuration. Every step runs in a fresh container, so installing and packaging is one step
+  install:
     image: tumbleowlee/neovim:latest
 
     commands:
       - mkdir -p ~/.config/nvim
-      - cp -r ./init.lua ./lua ./after ~/.config/nvim/ || exit 1
+      - cp -r ./init.lua ./lua ./after ./lazy-lock.json ~/.config/nvim/ || exit 1
       - nvim +'SyncInstall' +qall || exit 1
+      - |
+        if [ "$CI_COMMIT_TAG" = nightly ]; then
+          export GIT_PATH=$(pwd)
+          cd ~/
+          tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
+        fi
 
     when:
-      - event: push
-      - event: manual
-
-  artifact:
-    image: tumbleowlee/neovim:latest
-
-    commands:
-      - mkdir -p ~/.config/nvim
-      - cp -r ./init.lua ./lua ./after ~/.config/nvim/ || exit 1
-      - nvim +'SyncInstall' +qall || exit 1
-      - export GIT_PATH=$(pwd)
-      - cd ~/
-      - tar cvfz $GIT_PATH/neovim-config.tar.gz .local/share/nvim/ .config/nvim
-
-    when:
+      - event: [push, pull_request, manual]
       - event: tag
         ref: refs/tags/nightly
 

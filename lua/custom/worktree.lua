@@ -144,6 +144,27 @@ vim.api.nvim_create_autocmd('BufReadPost', {
     end,
 })
 
+-- A worktree no tab shows anymore is released: its files are editable and get a language server again
+vim.api.nvim_create_autocmd('TabClosed', {
+    group = group,
+    callback = function()
+        local shown = {}
+        for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+            shown[vim.t[tab].worktree or ''] = true
+        end
+        for path in pairs(reviewed) do
+            if not shown[path] then
+                reviewed[path] = nil
+                for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                    if vim.startswith(vim.api.nvim_buf_get_name(buf), path .. '/') then
+                        vim.bo[buf].readonly = false
+                    end
+                end
+            end
+        end
+    end,
+})
+
 vim.api.nvim_create_user_command('Worktree', function(opts)
     local name, stage = opts.fargs[1], opts.fargs[#opts.fargs] == 'stage'
     if not name or (stage and #opts.fargs == 1) then

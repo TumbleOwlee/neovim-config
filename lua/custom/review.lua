@@ -196,25 +196,22 @@ local function comments_at(buf, lnum)
     return list
 end
 
--- The diff unified shows for the buffer as { added = { [lnum] = true }, deleted = { [lnum] = lines } },
--- where deleted lines are shown above buffer line `lnum`, or nil when no diff is shown
+-- The buffer's diff against the base of the review as { added = { [lnum] = true }, deleted = { [lnum] = lines } },
+-- where deleted lines are shown above buffer line `lnum`, or nil when unified shows no diff for it
 local function buffer_diff(buf)
     local udiff = package.loaded['unified.diff']
-    local active, ustate = unified_active()
-    if not (active and udiff and udiff.is_diff_displayed(buf)) then
+    if not (unified_active() and udiff and udiff.is_diff_displayed(buf)) then
         return nil
     end
-    local ok, base = pcall(function()
-        return ustate.get_commit_base()
-    end)
     local file = vim.api.nvim_buf_get_name(buf)
-    local dir = vim.fn.fnamemodify(file, ':h')
-    local root = ok and git({ 'rev-parse', '--show-toplevel' }, dir)
-    if not root then
+    local root = git({ 'rev-parse', '--show-toplevel' }, vim.fn.fnamemodify(file, ':h'))
+    -- git resolves symbolic links in the top level, so the file's path has to be resolved as well
+    local path = root and vim.fs.relpath(root, vim.uv.fs_realpath(file) or file)
+    if not path then
         return nil
     end
     -- A file that does not exist in the base commit is entirely added
-    local old = git({ 'show', base .. ':' .. vim.fs.relpath(root, file) }, root, true) or ''
+    local old = git({ 'show', commit_base() .. ':' .. path }, root, true) or ''
     local new = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n') .. '\n'
     local old_lines = vim.split(old, '\n')
 
@@ -639,9 +636,17 @@ local function format_review(list)
         table.insert(lines, '')
         table.insert(lines, ('%d. %s'):format(i, location(c.file, c.lnum, c.end_lnum)))
         if #c.excerpt > 0 then
-            -- Lines commented outside of a diff are plain code
+            -- Lines commented outside of a diff are plain code. The fence is longer than any run of backticks
+            -- in the code, which would end it otherwise
             local is_diff = on_diff(c)
-            table.insert(lines, '   ```' .. (is_diff and 'diff' or c.ft or ''))
+            local longest = 2
+            for _, line in ipairs(c.excerpt) do
+                for run in line:gmatch('`+') do
+                    longest = math.max(longest, #run)
+                end
+            end
+            local fence = ('`'):rep(longest + 1)
+            table.insert(lines, '   ' .. fence .. (is_diff and 'diff' or c.ft or ''))
             for j, line in ipairs(c.excerpt) do
                 if j > 40 then
                     table.insert(lines, ('   … %d more lines'):format(#c.excerpt - 40))
@@ -649,7 +654,7 @@ local function format_review(list)
                 end
                 table.insert(lines, '   ' .. (is_diff and line or line:sub(2)))
             end
-            table.insert(lines, '   ```')
+            table.insert(lines, '   ' .. fence)
         end
         for _, line in ipairs(vim.split(c.text, '\n')) do
             table.insert(lines, '   ' .. line)
@@ -800,8 +805,15 @@ function M.start(args)
             end,
         })
     end
-    if args and args ~= '' then
+    if args and args ~= '' and args ~= state.base then
         state.base = args
+        -- The excerpts sent with the comments show the diff against the base
+        for _, c in pairs(state.comments) do
+            if c.buf and vim.api.nvim_buf_is_loaded(c.buf) then
+                sync(c)
+                c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum)
+            end
+        end
     end
     notify(('Review started against %s, comment with <leader>rc'):format(commit_base()))
 end

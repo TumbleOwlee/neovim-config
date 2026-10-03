@@ -102,6 +102,8 @@ return {
             'OverseerRestartLast',
             'OverseerOpen',
             'OverseerRun',
+            'OverseerShell',
+            'OverseerTaskAction',
             'OverseerToggle',
             'OverseerTestOutput',
         },
@@ -135,7 +137,6 @@ return {
         ---@type overseer.SetupOpts
         opts = {
             dap = false,
-            log_level = vim.log.levels.TRACE,
             component_aliases = {
                 default = {
                     'on_exit_set_status',
@@ -170,7 +171,7 @@ return {
         config = function(_, opts)
             local overseer = require('overseer')
             overseer.setup(opts)
-            vim.api.nvim_create_user_command('OverseerTestOutput', function(params)
+            vim.api.nvim_create_user_command('OverseerTestOutput', function()
                 vim.cmd.tabnew()
                 vim.bo.bufhidden = 'wipe'
                 overseer.create_task_output_view(0, {
@@ -237,7 +238,6 @@ return {
             end, {
                 desc = 'Run your makeprg as an Overseer task',
                 nargs = '*',
-                bang = true,
             })
 
             vim.api.nvim_create_user_command('OverseerRestartLast', function()
@@ -277,7 +277,6 @@ return {
             end, {
                 desc = 'Run your CMake command as an Overseer task',
                 nargs = '*',
-                bang = true,
             })
 
             vim.api.nvim_create_user_command('Run', function(params)
@@ -298,7 +297,6 @@ return {
             end, {
                 desc = 'Run command as an Overseer task',
                 nargs = '*',
-                bang = true,
             })
         end,
     },

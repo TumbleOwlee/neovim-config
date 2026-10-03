@@ -1,3 +1,3 @@
 FROM alpine:latest
 
-RUN apk add stylua
+RUN apk add --no-cache stylua

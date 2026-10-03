@@ -3,9 +3,6 @@ local opt = vim.opt
 --Enable project-local .nvim.lua/.exrc files (asks for trust before running them)
 opt.exrc = true
 
---Incremental live completion
-opt.inccommand = 'nosplit'
-
 --Highlight on search is toggled by custom.search
 opt.hlsearch = false
 
@@ -43,15 +40,10 @@ opt.splitright = true
 opt.list = true
 opt.listchars:append('eol:↴')
 
---Set completeopt to have a better completion experience
-opt.completeopt = 'menu,menuone,noselect'
-
 -- Highlight on yank
 vim.api.nvim_create_autocmd('TextYankPost', {
     group = vim.api.nvim_create_augroup('YankHighlight', { clear = true }),
     callback = function()
-        -- vim.hl.hl_op replaces the deprecated vim.hl.on_yank in newer Neovim versions
-        local hl_op = vim.hl.hl_op or vim.hl.on_yank
-        hl_op()
+        vim.hl.on_yank()
     end,
 })

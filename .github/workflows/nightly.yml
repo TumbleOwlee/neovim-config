@@ -1,0 +1,24 @@
+name: Nightly Tag
+
+# Moves the `nightly` tag to the head of main, which makes Woodpecker build and publish the offline package
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Update nightly tag
+        uses: EndBug/latest-tag@v1
+        with:
+          ref: nightly

@@ -30,45 +30,71 @@ return {
         'mfussenegger/nvim-dap',
         keys = {
             -- Quick access without leader
-            { '<A-b>', dap(function(d)
-                d.toggle_breakpoint()
-            end), desc = 'Debug: toggle breakpoint' },
-            { '<A-r>', dap(function(d)
-                if not d.session() then
-                    d.continue()
-                end
-            end), desc = 'Debug: start session' },
+            {
+                '<A-b>',
+                dap(function(d)
+                    d.toggle_breakpoint()
+                end),
+                desc = 'Debug: toggle breakpoint',
+            },
+            {
+                '<A-r>',
+                dap(function(d)
+                    if not d.session() then
+                        d.continue()
+                    end
+                end),
+                desc = 'Debug: start session',
+            },
             { '<A-c>', dap(function(d)
                 d.continue()
             end, true), desc = 'Debug: continue' },
-            { '<A-n>', dap(function(d)
-                d.step_over()
-            end, true), desc = 'Debug: step over' },
-            { '<A-s>', dap(function(d)
-                d.step_into()
-            end, true), desc = 'Debug: step into' },
+            {
+                '<A-n>',
+                dap(function(d)
+                    d.step_over()
+                end, true),
+                desc = 'Debug: step over',
+            },
+            {
+                '<A-s>',
+                dap(function(d)
+                    d.step_into()
+                end, true),
+                desc = 'Debug: step into',
+            },
             { '<A-f>', show('frames'), desc = 'Debug: show frames' },
             { '<A-l>', show('scopes'), desc = 'Debug: show locals' },
             { '<A-p>', dap(function(d)
                 d.repl.toggle()
             end), desc = 'Debug: toggle REPL' },
             -- Full set under <leader>d
-            { '<leader>db', dap(function(d)
-                d.toggle_breakpoint()
-            end), desc = 'Toggle breakpoint' },
-            { '<leader>dB', dap(function(d)
-                d.clear_breakpoints()
-            end), desc = 'Clear all breakpoints' },
+            {
+                '<leader>db',
+                dap(function(d)
+                    d.toggle_breakpoint()
+                end),
+                desc = 'Toggle breakpoint',
+            },
+            {
+                '<leader>dB',
+                dap(function(d)
+                    d.clear_breakpoints()
+                end),
+                desc = 'Clear all breakpoints',
+            },
             { '<leader>dc', dap(function(d)
                 d.continue()
             end), desc = 'Continue / start' },
             {
                 '<leader>dr',
                 dap(function(d)
+                    -- restart() waits for the session to end before it starts the next one
                     if d.session() then
-                        d.terminate()
+                        d.restart()
+                    else
+                        d.continue()
                     end
-                    d.continue()
                 end),
                 desc = 'Restart session',
             },
@@ -87,26 +113,46 @@ return {
             { '<leader>dk', dap(function(d)
                 d.step_back()
             end, true), desc = 'Step back' },
-            { '<leader>dK', dap(function(d)
-                d.reverse_continue()
-            end, true), desc = 'Reverse continue' },
-            { '<leader>dg', dap(function(d)
-                d.run_to_cursor()
-            end), desc = 'Run to cursor' },
+            {
+                '<leader>dK',
+                dap(function(d)
+                    d.reverse_continue()
+                end, true),
+                desc = 'Reverse continue',
+            },
+            {
+                '<leader>dg',
+                dap(function(d)
+                    d.run_to_cursor()
+                end),
+                desc = 'Run to cursor',
+            },
             { '<leader>dp', dap(function(d)
                 d.pause()
             end, true), desc = 'Pause thread' },
-            { '<leader>du', dap(function(d)
-                d.up()
-            end, true), desc = 'Go up in stacktrace' },
-            { '<leader>dd', dap(function(d)
-                d.down()
-            end, true), desc = 'Go down in stacktrace' },
+            {
+                '<leader>du',
+                dap(function(d)
+                    d.up()
+                end, true),
+                desc = 'Go up in stacktrace',
+            },
+            {
+                '<leader>dd',
+                dap(function(d)
+                    d.down()
+                end, true),
+                desc = 'Go down in stacktrace',
+            },
             { '<leader>df', show('frames'), desc = 'Show frames' },
             { '<leader>ds', show('scopes'), desc = 'Show scopes' },
-            { '<leader>dR', dap(function(d)
-                d.repl.toggle()
-            end), desc = 'Toggle REPL console' },
+            {
+                '<leader>dR',
+                dap(function(d)
+                    d.repl.toggle()
+                end),
+                desc = 'Toggle REPL console',
+            },
             {
                 '<leader>dv',
                 dap(function()
@@ -116,25 +162,34 @@ return {
             },
         },
         config = function()
-            local function find_executable(name, dir)
-                local d = dir or '/usr/bin/'
-                local pfile = io.popen('ls -a "' .. d .. '"')
-                if pfile then
-                    for n in pfile:lines() do
-                        if string.find(n, name, 0, true) then
-                            pfile:close()
-                            return d .. n
-                        end
+            -- The first of the executables found on the PATH or installed by Mason, also with a version suffix as
+            -- distributions install them (e.g. `lldb-dap-18`), preferring the newest version
+            local function find_executable(...)
+                local mason = vim.fs.joinpath(vim.fn.stdpath('data'), 'mason', 'bin')
+                local dirs = table.concat(vim.list_extend(vim.split(vim.env.PATH or '', ':'), { mason }), ',')
+                for _, name in ipairs({ ... }) do
+                    if vim.fn.executable(name) == 1 then
+                        return vim.fn.exepath(name)
                     end
-                    pfile:close()
+                    if vim.fn.executable(vim.fs.joinpath(mason, name)) == 1 then
+                        return vim.fs.joinpath(mason, name)
+                    end
+                    local versioned = vim.tbl_filter(function(path)
+                        return vim.fn.executable(path) == 1
+                    end, vim.fn.globpath(dirs, name .. '-[0-9]*', false, true))
+                    table.sort(versioned, function(a, b)
+                        return tonumber(a:match('%-(%d+)$') or 0) > tonumber(b:match('%-(%d+)$') or 0)
+                    end)
+                    if versioned[1] then
+                        return versioned[1]
+                    end
                 end
-                return nil
             end
 
             local dap = require('dap')
             dap.adapters.lldb = {
                 type = 'executable',
-                command = find_executable('lldb-dap') or find_executable('lldb-vscode') or 'lldb-vscode',
+                command = find_executable('lldb-dap', 'lldb-vscode') or 'lldb-dap',
                 name = 'lldb',
             }
 
@@ -159,7 +214,7 @@ return {
                     stopOnEntry = false,
                     args = function()
                         vim.g.dap_args = vim.fn.input('Arguments: ', vim.g.dap_args or '')
-                        return vim.split(vim.g.dap_args, ' +')
+                        return vim.split(vim.g.dap_args, ' +', { trimempty = true })
                     end,
                     runInTerminal = false,
                 },
@@ -179,9 +234,11 @@ return {
                         return '127.0.0.1'
                     end,
                     port = function()
-                        local val = tonumber(vim.fn.input('Port: '))
-                        assert(val, 'Please provide a port number')
-                        return val
+                        local value = vim.fn.input('Port [8086]: ')
+                        if value == '' then
+                            return 8086
+                        end
+                        return assert(tonumber(value), 'Please provide a port number')
                     end,
                 },
             }
@@ -190,10 +247,20 @@ return {
             end
         end,
     },
+    -- Debug Lua running in Neovim: start the server in the instance to debug, then attach from another one
     {
         'jbyuki/one-small-step-for-vimkind',
         dependencies = {
             'mfussenegger/nvim-dap',
+        },
+        keys = {
+            {
+                '<leader>dl',
+                function()
+                    require('osv').launch({ port = 8086 })
+                end,
+                desc = 'Start Lua debug server in this instance',
+            },
         },
     },
 }
