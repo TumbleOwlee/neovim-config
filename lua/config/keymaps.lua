@@ -9,7 +9,18 @@ map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = 'Move 
 -- Buffers
 map('n', '<A-m>', '<cmd>update<CR><cmd>bnext<CR>', { desc = 'Save and go to next buffer' })
 
--- Tabs (<Tab> is left alone, it is <C-i> in most terminals)
+-- Tabs. Most terminals send <Tab> for <C-i>, so jumping forward in the jump list only keeps working in a
+-- terminal that tells the two apart, which is what the <C-i> mapping is for
+map('n', '<Tab>', '<cmd>tabnext<CR>', { desc = 'Next tab' })
+map('n', '<S-Tab>', '<cmd>tabprevious<CR>', { desc = 'Previous tab' })
+map('n', '<C-i>', '<C-i>', { desc = 'Jump forward' })
+map('n', '<C-t>', '<cmd>tab split<CR>', { desc = 'Open current buffer in new tab' })
+map('n', '<C-q>', function()
+    -- The last tab cannot be closed
+    if #vim.api.nvim_list_tabpages() > 1 then
+        vim.cmd.tabclose()
+    end
+end, { desc = 'Close current tab' })
 map('n', ']<Tab>', '<cmd>tabnext<CR>', { desc = 'Next tab' })
 map('n', '[<Tab>', '<cmd>tabprevious<CR>', { desc = 'Previous tab' })
 map('n', '<leader><Tab>n', '<cmd>tabnew %<CR>', { desc = 'Open current buffer in new tab' })
