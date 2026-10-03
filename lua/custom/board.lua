@@ -1,35 +1,16 @@
--- Live view of a file based task board (`.claude/tasks/`): the directory a card sits in is its state, the card
--- itself is YAML frontmatter followed by an append-only log
+-- Follows a file based task board (`.claude/tasks/`) on the status line and the window bar: the directory a card
+-- sits in is its state, the card itself is YAML frontmatter followed by an append-only log
 local M = {}
 
-local ns = vim.api.nvim_create_namespace('board')
 local group = vim.api.nvim_create_augroup('board', { clear = true })
 
 local states = { 'open', 'inprogress', 'inreview', 'done' }
-local state_hl = {
-    open = 'Comment',
-    inprogress = 'DiagnosticInfo',
-    inreview = 'DiagnosticWarn',
-    done = 'DiagnosticOk',
-}
--- Files of a run the user decides on, by the key that opens them from the board
-local artifacts = {
-    s = 'spec-diff.md',
-    p = 'plan.summary.md',
-    r = 'review.verdict.md',
-    g = 'gauntlet.log',
-}
-
 local state = {
     root = nil, -- the tasks directory, nil without a board
     watchers = {},
     timer = nil,
-    cards = {}, -- id -> { id, slug, label, state, path, fields, ready, last }
+    cards = {}, -- id -> { id, slug, label, state, fields, ready }
     winbar = '', -- the steps of the followed run, shown above every file window
-    moved = {}, -- id -> true while a card that changed its state is highlighted
-    buf = nil,
-    win = nil,
-    lines = {}, -- lnum -> card or slug of the rendered line
     focus = nil, -- slug of the only run this session shows, nil for all runs
     approvals = {}, -- slug -> { marker, paths, name, mtime } of the files waiting for the user's approval
     artifact_watchers = {}, -- artifact directory -> watcher
@@ -45,7 +26,7 @@ local function read_card(path, card_state)
         return nil
     end
     local id = vim.fn.fnamemodify(path, ':t:r')
-    local fields, last, ready, fences = {}, nil, false, 0
+    local fields, ready, fences = {}, false, 0
     for _, line in ipairs(lines) do
         if line == '---' and fences < 2 then
             fences = fences + 1
@@ -54,8 +35,7 @@ local function read_card(path, card_state)
             if key then
                 fields[key] = value
             end
-        elseif vim.trim(line) ~= '' then
-            last = line
+        else
             ready = ready or line:find('pr=ready', 1, true) ~= nil
         end
     end
@@ -65,11 +45,8 @@ local function read_card(path, card_state)
         slug = slug or id,
         label = label,
         state = card_state,
-        path = path,
         fields = fields,
         ready = ready, -- whether the log tells that the pull request left its draft state
-        -- Events of the log carry the date, which only matters for the day they happen on
-        last = last and last:gsub('^%d+%-%d+%-%d+T', '') or nil,
     }
 end
 
@@ -135,72 +112,6 @@ local function runs()
         end)
     end
     return list
-end
-
-local function render()
-    local buf = state.buf
-    if not (buf and vim.api.nvim_buf_is_valid(buf)) then
-        return
-    end
-    local lines, marks = {}, {}
-    state.lines = {}
-    local function add(text, target, hl, line_hl)
-        table.insert(lines, text)
-        state.lines[#lines] = target
-        if hl or line_hl then
-            table.insert(marks, { #lines - 1, hl, line_hl })
-        end
-    end
-
-    for i, run in ipairs(runs()) do
-        if i > 1 then
-            add('')
-        end
-        local parent = run.parent
-        add(run.slug .. (parent and '  ' .. parent.state or ''), parent or run.slug, 'Title')
-        if parent then
-            local f, info = parent.fields, {}
-            for _, item in ipairs({ { 'issue', '#' }, { 'pr', 'PR #' }, { 'mode', '' }, { 'wave', 'wave ' } }) do
-                if f[item[1]] and f[item[1]] ~= '' then
-                    table.insert(info, item[2] .. f[item[1]])
-                end
-            end
-            if #info > 0 then
-                add('  ' .. table.concat(info, ' · '), parent, 'Comment')
-            end
-            if parent.last then
-                add('  ' .. parent.last, parent, 'Comment')
-            end
-        end
-        for _, s in ipairs(states) do
-            local cards = vim.tbl_filter(function(card)
-                return card.state == s
-            end, run.stages)
-            add(('  %s (%d)'):format(s, #cards), run.slug, state_hl[s])
-            for _, card in ipairs(cards) do
-                local blocked = card.state == 'open' and (card.fields['blocked-by'] or ''):match('^%[(.+)%]$')
-                local detail = blocked and '← ' .. blocked:gsub(vim.pesc(card.slug) .. '%.', '') or card.last or ''
-                add(('    %-4s %s'):format(card.label, detail), card, nil, state.moved[card.id] and 'CurSearch')
-            end
-        end
-    end
-    if #lines == 0 then
-        add('No cards on the board', nil, 'Comment')
-    end
-
-    vim.bo[buf].modifiable = true
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    vim.bo[buf].modifiable = false
-    vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-    for _, mark in ipairs(marks) do
-        vim.api.nvim_buf_set_extmark(
-            buf,
-            ns,
-            mark[1],
-            0,
-            { line_hl_group = mark[3], hl_group = mark[2], end_col = #lines[mark[1] + 1] }
-        )
-    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -408,22 +319,7 @@ function refresh()
     state.approvals = approvals
     watch_artifacts()
 
-    local previous, cards = state.cards, scan()
-    local moved = false
-    for id, card in pairs(cards) do
-        if previous[id] and previous[id].state ~= card.state then
-            state.moved[id] = true
-            moved = true
-        end
-    end
-    state.cards = cards
-    render()
-    if moved then
-        vim.defer_fn(function()
-            state.moved = {}
-            render()
-        end, 5000)
-    end
+    state.cards = scan()
     refresh_bars()
 end
 
@@ -440,7 +336,6 @@ local function load()
     state.cards = scan()
     state.approvals = scan_approvals()
     watch_artifacts()
-    render()
     refresh_bars()
 end
 
@@ -451,7 +346,7 @@ local function watch()
     state.root = vim.fn.isdirectory(root) == 1 and root or nil
     state.cards, state.approvals = {}, {}
     if not state.root then
-        render()
+        refresh_bars()
         return
     end
     state.timer = state.timer or assert(vim.uv.new_timer())
@@ -459,133 +354,6 @@ local function watch()
         table.insert(state.watchers, start_watcher(state.root .. '/' .. dir))
     end
     load()
-end
-
--- A window files can be opened in: the current one, unless it is the board, a float or shows no file
-local function file_win()
-    local wins = vim.list_extend({ vim.api.nvim_get_current_win() }, vim.api.nvim_tabpage_list_wins(0))
-    for _, win in ipairs(wins) do
-        local is_float = vim.api.nvim_win_get_config(win).relative ~= ''
-        if win ~= state.win and not is_float and vim.bo[vim.api.nvim_win_get_buf(win)].buftype == '' then
-            return win
-        end
-    end
-end
-
-local function open_file(path)
-    if vim.fn.filereadable(path) == 0 then
-        notify(('%s does not exist'):format(vim.fn.fnamemodify(path, ':.')), vim.log.levels.WARN)
-        return
-    end
-    local win = file_win()
-    if win then
-        vim.api.nvim_set_current_win(win)
-        vim.cmd.edit(vim.fn.fnameescape(path))
-    else
-        vim.cmd('topleft vsplit ' .. vim.fn.fnameescape(path))
-    end
-end
-
-local function target()
-    return state.lines[vim.api.nvim_win_get_cursor(0)[1]]
-end
-
-local function open_card()
-    local t = target()
-    if type(t) == 'table' then
-        open_file(t.path)
-    end
-end
-
-local function open_artifact(name)
-    local t = target()
-    local slug = type(t) == 'table' and t.slug or t
-    if slug then
-        open_file(('%s/artifacts/%s/%s'):format(state.root, slug, name))
-    end
-end
-
--- Review the worktree of the card under the cursor, or of its run
-local function open_worktree()
-    local t = target()
-    if not t then
-        return
-    end
-    local card = type(t) == 'table' and t or state.cards[t]
-    local parent = state.cards[type(t) == 'table' and t.slug or t]
-    local path = card and card.fields.worktree or parent and parent.fields.worktree
-    if not path or path == '' then
-        notify('The card names no worktree', vim.log.levels.WARN)
-        return
-    end
-    require('custom.worktree').open(vim.fs.joinpath(vim.fn.getcwd(-1, -1), path))
-end
-
-local function board_buf()
-    if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-        return state.buf
-    end
-    local buf = vim.api.nvim_create_buf(false, true)
-    state.buf = buf
-    vim.api.nvim_buf_set_name(buf, 'board://tasks')
-    vim.bo[buf].buftype = 'nofile'
-    vim.bo[buf].bufhidden = 'hide'
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].modifiable = false
-    vim.bo[buf].filetype = 'board'
-    local function map(lhs, rhs, desc)
-        vim.keymap.set('n', lhs, rhs, { buffer = buf, nowait = true, desc = desc })
-    end
-    map('<CR>', open_card, 'Open card')
-    map('d', open_worktree, 'Review worktree')
-    map('q', M.close, 'Close board')
-    for key, name in pairs(artifacts) do
-        map(key, function()
-            open_artifact(name)
-        end, 'Open ' .. name)
-    end
-    return buf
-end
-
-local function is_open()
-    return state.win ~= nil and vim.api.nvim_win_is_valid(state.win)
-end
-
-function M.close()
-    if is_open() then
-        pcall(vim.api.nvim_win_close, state.win, true)
-    end
-    state.win = nil
-end
-
-function M.open()
-    if not state.root then
-        notify('No task board (.claude/tasks) in ' .. vim.fn.getcwd(-1, -1), vim.log.levels.WARN)
-        return
-    end
-    if is_open() then
-        vim.api.nvim_set_current_win(state.win)
-        return
-    end
-    local buf = board_buf()
-    state.win = vim.api.nvim_open_win(buf, true, { split = 'right', win = -1, width = 48 })
-    local wo = vim.wo[state.win]
-    wo.winfixwidth = true
-    wo.number = false
-    wo.relativenumber = false
-    wo.signcolumn = 'no'
-    wo.wrap = false
-    wo.cursorline = true
-    wo.winbar = '%#Title# Task board %*  ⏎ card · s spec · p plan · r verdict · g gauntlet · d diff'
-    render()
-end
-
-function M.toggle()
-    if is_open() then
-        M.close()
-    else
-        M.open()
-    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -692,7 +460,7 @@ function M.focused()
     return state.focus
 end
 
--- Limit the board, the status line and the approvals of this session to one run, or show all runs with `nil`
+-- Limit the status line, the window bar and the approvals of this session to one run, or show all runs with `nil`
 function M.focus(slug)
     if not state.root then
         notify('No task board (.claude/tasks) in ' .. vim.fn.getcwd(-1, -1), vim.log.levels.WARN)
@@ -741,11 +509,11 @@ vim.api.nvim_create_user_command('Board', function(opts)
             M.pick_focus()
         end
     else
-        M.toggle()
+        notify(('Unknown subcommand %s'):format(opts.fargs[1]), vim.log.levels.ERROR)
     end
 end, {
-    nargs = '*',
-    desc = 'Toggle the task board, open the file waiting for `approval`, or `focus [slug|all]` on one run',
+    nargs = '+',
+    desc = 'Open the file waiting for `approval`, or `focus [slug|all]` on one run',
     complete = function(lead, line)
         local candidates = line:match('^%s*%a+!?%s+focus%s') and vim.list_extend({ 'all' }, slugs())
             or { 'approval', 'focus' }
@@ -755,7 +523,6 @@ end, {
     end,
 })
 
-vim.keymap.set('n', '<leader>bb', M.toggle, { desc = 'Toggle task board' })
 vim.keymap.set('n', '<leader>bf', M.pick_focus, { desc = 'Follow one run of the task board' })
 vim.keymap.set('n', '<leader>ba', M.open_approval, { desc = 'Open file waiting for approval' })
 
