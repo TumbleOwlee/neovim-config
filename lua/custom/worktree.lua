@@ -63,6 +63,45 @@ function M.is_reviewed(file)
     return false
 end
 
+-- Loaded buffers of the files below a worktree
+local function buffers_in(path)
+    return vim.tbl_filter(function(buf)
+        return vim.api.nvim_buf_is_loaded(buf) and vim.startswith(vim.api.nvim_buf_get_name(buf), path .. '/')
+    end, vim.api.nvim_list_bufs())
+end
+
+-- The agent working in a worktree owns its files, so a review must not edit them by accident, and no language
+-- server indexes and checks a second copy of the workspace while the agent builds it
+local function hold(buf)
+    vim.bo[buf].readonly = true
+    for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
+        vim.lsp.buf_detach_client(buf, client.id)
+    end
+end
+
+local function release(buf)
+    vim.bo[buf].readonly = false
+    -- Start the language servers the buffer would have got when it was read
+    pcall(vim.api.nvim_buf_call, buf, function()
+        vim.cmd.doautocmd('nvim.lsp.enable FileType')
+    end)
+end
+
+-- vim.lsp.enable() has no way to skip a buffer, so every server start is checked here, which keeps servers
+-- from Mason, plugins and after/lsp/ alike out of the worktrees under review
+local lsp_start = vim.lsp.start
+---@diagnostic disable-next-line: duplicate-set-field
+vim.lsp.start = function(config, opts)
+    local buf = opts and opts.bufnr or vim.api.nvim_get_current_buf()
+    if buf == 0 then
+        buf = vim.api.nvim_get_current_buf()
+    end
+    if M.is_reviewed(vim.api.nvim_buf_get_name(buf)) then
+        return nil
+    end
+    return lsp_start(config, opts)
+end
+
 -- Open the worktree, given by directory name, branch or path, in its own tab with the diff of everything its
 -- branch changed. With `stage`, the diff is the last commit and the uncommitted changes on top of it only
 function M.open(name, stage)
@@ -96,7 +135,13 @@ function M.open(name, stage)
         vim.cmd.tcd(vim.fn.fnameescape(wt.path))
         vim.t.worktree = wt.path
     end
-    reviewed[wt.path] = true
+    if not reviewed[wt.path] then
+        reviewed[wt.path] = true
+        -- Files of the worktree opened before are held like the ones read from now on
+        for _, buf in ipairs(buffers_in(wt.path)) do
+            hold(buf)
+        end
+    end
     vim.cmd({ cmd = 'Unified', args = { base } })
     notify(
         ('%s (%s): %s'):format(
@@ -134,12 +179,11 @@ function M.pick(stage)
     end
 end
 
--- The agent working in a worktree owns its files, so a review must not edit them by accident
 vim.api.nvim_create_autocmd('BufReadPost', {
     group = group,
     callback = function(ev)
         if M.is_reviewed(vim.api.nvim_buf_get_name(ev.buf)) then
-            vim.bo[ev.buf].readonly = true
+            hold(ev.buf)
         end
     end,
 })
@@ -155,10 +199,8 @@ vim.api.nvim_create_autocmd('TabClosed', {
         for path in pairs(reviewed) do
             if not shown[path] then
                 reviewed[path] = nil
-                for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-                    if vim.startswith(vim.api.nvim_buf_get_name(buf), path .. '/') then
-                        vim.bo[buf].readonly = false
-                    end
+                for _, buf in ipairs(buffers_in(path)) do
+                    release(buf)
                 end
             end
         end

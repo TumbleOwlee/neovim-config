@@ -63,16 +63,18 @@ local function unified_active()
     return ustate ~= nil and ustate.is_active(), ustate
 end
 
--- The ref given to :Review, else the base of the unified diff, else HEAD
-local function commit_base()
-    if state.base then
-        return state.base
-    end
-    local _, ustate = unified_active()
+-- The base of the unified diff, so excerpts match the diff on screen (:Review <ref> moves unified to it), else
+-- the ref given to :Review, else HEAD
+local function unified_base()
+    local active, ustate = unified_active()
     local ok, base = pcall(function()
-        return ustate.get_commit_base()
+        return active and ustate.get_commit_base()
     end)
-    return ok and base or 'HEAD'
+    return ok and base or nil
+end
+
+local function commit_base()
+    return unified_base() or state.base or 'HEAD'
 end
 
 -- Run git, returning its trimmed output (or the raw output with `raw`), or nil when it fails
@@ -152,7 +154,9 @@ local function place(c, buf)
         ns,
         math.min(c.lnum, count) - 1,
         0,
-        { end_row = last, number_hl_group = 'ReviewGutter' }
+        -- The end sits at the start of the last line, so it has to move with text inserted there like the start
+        -- does, or a line added above the last one would take its place in the range
+        { end_row = last, end_right_gravity = true, number_hl_group = 'ReviewGutter' }
     )
     c.box = vim.api.nvim_buf_set_extmark(buf, ns, last, 0, { virt_lines = comment_box(c, text_width(buf)) })
 end
@@ -543,7 +547,7 @@ function M.jump(c)
     end
     local buf = vim.api.nvim_get_current_buf()
     if active and not require('unified.diff').is_diff_displayed(buf) then
-        require('unified.diff').show(ustate.get_commit_base(), buf)
+        require('unified.diff').show(commit_base(), buf)
         require('unified.auto_refresh').setup(buf)
     end
     vim.api.nvim_win_set_cursor(0, { math.min(c.lnum, vim.api.nvim_buf_line_count(buf)), 0 })
@@ -761,6 +765,18 @@ function M.status()
     return status
 end
 
+-- The excerpts sent with the comments show the diff against the base, so they follow it when it changes. A
+-- comment in a buffer whose diff is not shown keeps its excerpt, as without a diff it would lose its +/- lines
+local function refresh_excerpts()
+    local udiff = package.loaded['unified.diff']
+    for _, c in pairs(state.comments) do
+        if c.buf and vim.api.nvim_buf_is_loaded(c.buf) and udiff and udiff.is_diff_displayed(c.buf) then
+            sync(c)
+            c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum)
+        end
+    end
+end
+
 function M.start(args)
     if not state.active then
         state.active = true
@@ -793,6 +809,11 @@ function M.start(args)
                 end
             end,
         })
+        vim.api.nvim_create_autocmd('User', {
+            group = group,
+            pattern = 'UnifiedBaseCommitUpdated',
+            callback = refresh_excerpts,
+        })
         vim.api.nvim_create_autocmd('BufReadPost', {
             group = group,
             callback = function(ev)
@@ -805,17 +826,16 @@ function M.start(args)
             end,
         })
     end
-    if args and args ~= '' and args ~= state.base then
+    if args and args ~= '' then
         state.base = args
-        -- The excerpts sent with the comments show the diff against the base
-        for _, c in pairs(state.comments) do
-            if c.buf and vim.api.nvim_buf_is_loaded(c.buf) then
-                sync(c)
-                c.excerpt = excerpt(c.buf, c.lnum, c.end_lnum)
-            end
+        if unified_active() and unified_base() ~= args then
+            -- The diff on screen follows the base, which refreshes the excerpts once unified resolved it
+            vim.cmd({ cmd = 'Unified', args = { args } })
+        else
+            refresh_excerpts()
         end
     end
-    notify(('Review started against %s, comment with <leader>rc'):format(commit_base()))
+    notify(('Review started against %s, comment with <leader>rc'):format(args ~= '' and args or commit_base()))
 end
 
 local function teardown()

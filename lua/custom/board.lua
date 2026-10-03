@@ -32,7 +32,9 @@ local function read_card(path, card_state)
         elseif fences == 1 then
             local key, value = line:match('^([%w_-]+):%s*(.-)%s*$')
             if key then
-                fields[key] = value
+                -- A YAML null is no value and quotes are not part of it, so `gate1: ""` counts as not set
+                local quoted = value:match('^"(.*)"$') or value:match("^'(.*)'$")
+                fields[key] = quoted or ((value == 'null' or value == '~') and '' or value)
             end
         else
             ready = ready or line:find('pr=ready', 1, true) ~= nil
@@ -355,7 +357,12 @@ end
 local function watch()
     unwatch()
     local root = vim.fn.getcwd(-1, -1) .. '/.claude/tasks'
-    state.root = vim.fn.isdirectory(root) == 1 and root or nil
+    root = vim.fn.isdirectory(root) == 1 and root or nil
+    -- The followed run belongs to the board it was picked on
+    if root ~= state.root then
+        state.focus = nil
+    end
+    state.root = root
     state.cards, state.approvals = {}, {}
     if not state.root then
         refresh_bars()

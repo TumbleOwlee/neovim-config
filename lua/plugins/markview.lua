@@ -6,31 +6,32 @@ return {
         },
         config = function()
             local opts = {
-                experimental = { check_rtp_message = false },
                 preview = {
                     modes = { 'n', 'i', 'no', 'c' },
                     icon_provider = 'mini',
                     hybrid_modes = { 'i', 'n' },
                     callbacks = {
-                        on_enable = function(_, win)
-                            vim.wo[win].conceallevel = 2
-                            vim.wo[win].concealcursor = 'nc'
+                        -- Called with the list of windows showing the buffer
+                        on_enable = function(_, wins)
+                            for _, win in ipairs(wins) do
+                                vim.wo[win].conceallevel = 2
+                                vim.wo[win].concealcursor = 'nc'
+                            end
                         end,
                     },
                 },
-                checkboxes = {
-                    enable = true,
-                    checked = {
-                        text = '󰡖',
-                        hl = 'MarkviewCheckboxChecked',
+                markdown_inline = {
+                    checkboxes = {
+                        enable = true,
+                        checked = {
+                            text = '󰡖',
+                            hl = 'MarkviewCheckboxChecked',
+                        },
+                        unchecked = {
+                            text = '',
+                            hl = 'MarkviewCheckboxUnchecked',
+                        },
                     },
-                    unchecked = {
-                        text = '',
-                        hl = 'MarkviewCheckboxUnchecked',
-                    },
-                },
-                links = {
-                    enable = true,
                 },
                 markdown = {
                     headings = {
