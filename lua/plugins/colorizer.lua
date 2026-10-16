@@ -4,7 +4,7 @@ return {
         'catgoose/nvim-colorizer.lua',
         event = { 'BufReadPost', 'BufNewFile' },
         opts = {
-            filetypes = { '*', '!snacks_terminal' },
+            filetypes = { '*', '!snacks_terminal', '!sidekick_terminal' },
         },
     },
 }

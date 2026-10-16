@@ -48,6 +48,11 @@ return {
                     layout = 'float',
                     float = { width = 0.9, height = 0.9, border = 'single' },
                 },
+                tools = {
+                    -- Claude Code runs in nvim's terminal, not in tmux, so it doesn't get the tmux variables of an
+                    -- nvim started inside tmux
+                    claude = { env = { TMUX = false, TMUX_PANE = false } },
+                },
             },
         },
         config = function(_, opts)
