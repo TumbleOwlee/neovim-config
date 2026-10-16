@@ -1,4 +1,4 @@
--- Code review sessions on top of unified.nvim: comment on diff lines, then send the review to Claude Code or Copilot Chat
+-- Code review sessions on top of unified.nvim: comment on diff lines, then send the review to Claude Code or Copilot CLI
 local M = {}
 
 local ns = vim.api.nvim_create_namespace('review')
@@ -318,7 +318,7 @@ local function panel_buf()
             end
         end,
     })
-    -- Closing a window (e.g. Copilot Chat) or hiding a float (e.g. Claude Code) returns to the window it was opened
+    -- Closing a window or hiding a float (e.g. Claude Code) returns to the window it was opened
     -- from. As the panel saves when left, there is nothing to continue there, so go back to the code instead. Moving
     -- into the panel from a window that is still shown stays in the panel
     vim.api.nvim_create_autocmd('WinEnter', {
@@ -768,37 +768,31 @@ end
 
 -- Targets a review can be sent to; `send` pastes the review into the prompt without submitting it and
 -- returns whether that worked
+local function sidekick(name)
+    return function(text)
+        local ok, cli = pcall(require, 'sidekick.cli')
+        if not ok then
+            return false
+        end
+        local terminals = require('custom.terminals')
+        terminals.hide(terminals.tmux())
+        terminals.ai_to_current_tab(name)
+        -- Sent as text, so braces in the comments are not taken for sidekick's context templates
+        local lines = vim.tbl_map(function(line)
+            return { { line } }
+        end, vim.split(text, '\n'))
+        cli.send({ name = name, text = lines, focus = true })
+        return true
+    end
+end
+
 local targets = {
-    claude = {
-        name = 'Claude Code',
-        send = function(text)
-            local terminals = require('custom.terminals')
-            terminals.hide(terminals.tmux())
-            terminals.claude_to_current_tab()
-            local ok, terminal = pcall(require, 'claudecode.terminal')
-            return ok and terminal.send_to_terminal(text, { submit = false, focus = true })
-        end,
-    },
-    copilot = {
-        name = 'Copilot Chat',
-        send = function(text)
-            local ok, chat = pcall(require, 'CopilotChat')
-            if not ok then
-                return false
-            end
-            chat.open()
-            -- Append to the prompt being written, so text already typed there is kept. Only the last message is
-            -- that prompt, an earlier user message was answered already
-            local last = chat.chat:get_message()
-            local typed = last and last.role == 'user' and vim.trim(last.content) ~= ''
-            chat.chat:add_message({ role = 'user', content = (typed and '\n\n' or '') .. text })
-            chat.chat:follow()
-            return true
-        end,
-    },
+    claude = { name = 'Claude Code', send = sidekick('claude') },
+    copilot = { name = 'Copilot CLI', send = sidekick('copilot') },
 }
 
--- Paste all unsent comments into the prompt of Claude Code (default) or Copilot Chat without submitting it
+-- Paste all comments into the prompt of Claude Code (default) or Copilot CLI without submitting it. Comments sent
+-- before are sent again, so a review can go to another tool or be resent after the prompt was cleared
 function M.send(target)
     if not require_active() then
         return
@@ -808,11 +802,9 @@ function M.send(target)
         notify(('Unknown review target %s, use claude or copilot'):format(target), vim.log.levels.ERROR)
         return
     end
-    local list = vim.tbl_filter(function(c)
-        return not c.sent
-    end, sorted())
+    local list = sorted()
     if #list == 0 then
-        notify('No unsent comments')
+        notify('No comments')
         return
     end
     for _, c in ipairs(list) do
@@ -1055,6 +1047,6 @@ map('n', '<leader>rl', M.list, { desc = 'List comments' })
 map('n', '<leader>rs', M.send, { desc = 'Send review to Claude Code' })
 map('n', '<leader>rp', function()
     M.send('copilot')
-end, { desc = 'Send review to Copilot Chat' })
+end, { desc = 'Send review to Copilot CLI' })
 
 return M

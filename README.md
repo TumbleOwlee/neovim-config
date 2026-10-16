@@ -36,8 +36,8 @@ Building the package (`:SyncInstall`) needs the `tree-sitter` CLI and a C compil
 
 ## AI Assistants
 
-- **Claude Code** ([claudecode.nvim](https://github.com/coder/claudecode.nvim)): requires the `claude` CLI. Toggle with `<A-,>` or `<leader>ac`.
-- **GitHub Copilot**: inline suggestions use Neovim's native inline completion. Install the server with `:MasonInstall copilot-language-server`, then run `:LspCopilotSignIn` once. Accept a suggestion with `<C-f>`, cycle with `<A-]>`/`<A-[>`. Chat is provided by [CopilotChat.nvim](https://github.com/CopilotC-Nvim/CopilotChat.nvim) (`<A-e>`, `<leader>C…`).
+- **GitHub Copilot**: inline suggestions use Neovim's native inline completion. Install the server with `:MasonInstall copilot-language-server`, then run `:LspCopilotSignIn` once. Accept a suggestion with `<C-f>`, cycle with `<A-]>`/`<A-[>`.
+- **Claude Code / Copilot CLI** ([sidekick.nvim](https://github.com/folke/sidekick.nvim)): the CLI tools run in a floating terminal and need the `claude` / `copilot` CLI. Toggle Claude Code with `<A-,>` and Copilot CLI with `<A-e>`; other tools and sending context are under `<leader>k…`. Next edit suggestions from the copilot LSP are shown as diffs in normal mode; jump to and apply them with `<C-f>`.
 
 ## Key Mappings
 
@@ -47,7 +47,7 @@ Building the package (`:SyncInstall`) needs the `tree-sitter` CLI and a C compil
 |---|---|
 | `<leader><Space>` / `<leader>ff` / `<leader>fg` | Buffers / files / live grep |
 | `<leader>fw` / `<leader>fz` / `<leader>fr` | Grep word / search buffer lines / recent files |
-| `<leader>fd` / `<leader>fb` / `<leader>e` | ToDo list / oil file browser / file explorer |
+| `<leader>fd` / `<leader>fb` / `<C-d>` | ToDo list / oil file browser / file explorer |
 | `gd` / `gD` / `gh` / `K` | Definition / declaration / references picker / hover |
 | `grn` / `gra` / `grr` / `gri` / `grt` | Native LSP: rename / code action / references / implementation / type definition |
 | `<C-n>` / `<C-p>` (`]d` / `[d`) | Next / previous diagnostic |
@@ -63,14 +63,14 @@ Building the package (`:SyncInstall`) needs the `tree-sitter` CLI and a C compil
 
 ## Code Review
 
-Review changes and send the comments to Claude Code or Copilot Chat. A review uses the diff shown by [unified.nvim](https://github.com/axkirillov/unified.nvim) when one is shown, but comments can be made on any file.
+Review changes and send the comments to Claude Code or Copilot CLI. A review uses the diff shown by [unified.nvim](https://github.com/axkirillov/unified.nvim) when one is shown, but comments can be made on any file.
 
 | Keys / Command | Action |
 |---|---|
 | `:Review [ref]` / `<leader>rr` | Start a review, optionally against `ref` |
 | `<leader>rc` | Comment on the cursor line or the selection |
 | `<leader>re` / `<leader>rd` / `<leader>rl` | Edit / delete the comments on the line / list all comments |
-| `<leader>rs` / `<leader>rp` | Send the unsent comments to Claude Code / Copilot Chat (`:Review send [claude\|copilot]`) |
+| `<leader>rs` / `<leader>rp` | Send all comments to Claude Code / Copilot CLI (`:Review send [claude\|copilot]`) |
 | `:Review end` / `<leader>rq` | End the review |
 | `:Worktree [name] [stage]` / `<leader>gw` | Review a linked git worktree in its own tab, read-only and without language servers; `stage` limits the diff to its last commit |
 

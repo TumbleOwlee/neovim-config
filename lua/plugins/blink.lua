@@ -79,7 +79,11 @@ return {
                 default = { 'lsp', 'snippets', 'path', 'buffer' },
             },
             cmdline = {
-                keymap = { preset = 'cmdline' },
+                keymap = {
+                    preset = 'cmdline',
+                    ['<C-y>'] = {},
+                    ['<C-f>'] = { 'select_and_accept', 'fallback' },
+                },
                 completion = { menu = { auto_show = true } },
             },
             -- Signature help is shown by noice

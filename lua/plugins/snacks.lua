@@ -92,11 +92,17 @@ return {
             },
             -- Explorer
             {
-                '<leader>e',
+                '<C-d>',
                 function()
-                    Snacks.explorer()
+                    -- An open explorer is focused instead of closed
+                    local explorer = Snacks.picker.get({ source = 'explorer' })[1]
+                    if explorer then
+                        explorer:focus()
+                    else
+                        Snacks.explorer()
+                    end
                 end,
-                desc = 'Toggle file explorer',
+                desc = 'Open or focus file explorer',
             },
             {
                 '<A-d>',

@@ -1,8 +1,7 @@
--- Keep only one floating Snacks terminal (tmux, Claude Code) visible at a time
+-- Keep only one floating terminal (tmux, the sidekick CLI tools) visible at a time
 local M = {}
 
--- Visible means the window shows the terminal buffer and is not config-hidden,
--- as claudecode.nvim hides its float with `hide = true` instead of closing it
+-- Visible means the window shows the terminal buffer and is not config-hidden
 local function is_visible(term)
     local win = term.win
     return win ~= nil
@@ -26,6 +25,7 @@ end
 function M.toggle_tmux()
     local tmux = M.tmux()
     M.hide_others(tmux)
+    M.ai_to_current_tab()
     -- Shown in another tab, it is moved here rather than hidden there
     local win = tmux and tmux:valid() and tmux.win
     if win and vim.api.nvim_win_get_tabpage(win) ~= vim.api.nvim_get_current_tabpage() then
@@ -39,17 +39,14 @@ function M.toggle_tmux()
     )
 end
 
--- claudecode hides its float rather than closing it, and showing it again switches to the tab it was first opened in.
--- A Claude Code window in another tab is closed (Claude keeps running in its buffer), so it opens in the current one
-function M.claude_to_current_tab()
-    local terminal = package.loaded['claudecode.terminal']
-    local buf = terminal and terminal.get_active_terminal_bufnr()
-    if not buf then
-        return
-    end
+-- A sidekick float stays in the tab it was opened in, and toggling it from another tab would close it there. The
+-- windows of the CLI tools in other tabs, and of the other tools in this one, are closed (the tools keep running in
+-- their buffers), so `name` opens in the current tab without covering another
+function M.ai_to_current_tab(name)
     local tab = vim.api.nvim_get_current_tabpage()
-    for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-        if vim.api.nvim_win_get_tabpage(win) ~= tab then
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local tool = vim.b[vim.api.nvim_win_get_buf(win)].sidekick_cli
+        if tool and (vim.api.nvim_win_get_tabpage(win) ~= tab or tool.name ~= name) then
             pcall(vim.api.nvim_win_close, win, true)
         end
     end

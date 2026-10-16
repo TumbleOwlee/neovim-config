@@ -11,9 +11,8 @@ return {
             spec = {
                 -- Groups
                 {
-                    { '<leader>a', group = 'Claude Code' },
                     { '<leader>b', group = 'Buffer / Board' },
-                    { '<leader>C', group = 'Copilot Chat' },
+                    { '<leader>k', group = 'Sidekick' },
                     { '<leader>c', group = 'Code' },
                     { '<leader>d', group = 'Debug' },
                     { '<leader>f', group = 'Find' },
